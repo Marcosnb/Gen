@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 220 14% 10%;
+    --foreground: 220 14% 95%;
+    --card: 220 14% 12%;
+    --card-foreground: 220 14% 95%;
+    --popover: 220 14% 12%;
+    --popover-foreground: 220 14% 95%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 15%;
+    --secondary-foreground: 220 14% 95%;
+    --muted: 220 14% 15%;
+    --muted-foreground: 220 14% 65%;
+    --accent: 220 14% 15%;
+    --accent-foreground: 220 14% 95%;
+    --border: 220 14% 15%;
+    --input: 220 14% 15%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased transition-colors duration-200;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+    text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 
+    focus:ring-primary dark:focus:ring-offset-background transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md 
+    text-foreground bg-background hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 
+    focus:ring-primary dark:focus:ring-offset-background transition-colors duration-200;
+  }
+
+  .card {
+    @apply bg-card text-card-foreground border border-border rounded-xl shadow-sm 
+    hover:shadow-md transition-all duration-200;
+  }
+
+  .input {
+    @apply block w-full px-3 py-2 border border-input rounded-md bg-background 
+    placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary 
+    focus:border-transparent transition-colors duration-200;
+  }
+}
