@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { Settings as SettingsIcon, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Settings as SettingsIcon, Loader2, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -167,8 +167,9 @@ export function Settings() {
               <button
                 type="button"
                 onClick={handleGenerateNewAvatar}
-                className="btn-secondary text-sm"
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
               >
+                <RefreshCw className="h-4 w-4" />
                 Gerar Novo Avatar
               </button>
             </div>
@@ -223,7 +224,7 @@ export function Settings() {
                   id="gender"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
-                  className="input w-full"
+                  className="w-full px-4 py-2.5 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                 >
                   <option value="">Prefiro não informar</option>
                   <option value="male">Masculino</option>
@@ -253,28 +254,25 @@ export function Settings() {
           )}
 
           {/* Botões de Ação */}
-          <div className="flex items-center justify-end gap-4 pt-4 border-t border-border">
+          <div className="mt-6 flex items-center justify-end gap-4">
             <button
               type="button"
-              className="btn-secondary"
               onClick={() => navigate('/')}
-              disabled={saving}
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="btn-primary min-w-[120px]"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-sm"
             >
               {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Salvando...
-                </>
+                <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                'Salvar Alterações'
+                <CheckCircle2 className="h-4 w-4" />
               )}
+              Salvar alterações
             </button>
           </div>
         </form>

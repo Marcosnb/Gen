@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { HelpCircle, MessageCircle, ThumbsUp, User as UserIcon, ArrowLeft, Settings } from 'lucide-react';
+import { HelpCircle, MessageCircle, ThumbsUp, User as UserIcon, ArrowLeft, Settings, Coins } from 'lucide-react';
 
 interface UserStats {
   questions_count: number;
@@ -15,6 +15,7 @@ export function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [points, setPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,12 +31,34 @@ export function Profile() {
       setUser(session.user);
 
       // Buscar estatísticas do usuário
-      const { data: userStats, error } = await supabase.rpc('get_user_stats', {
-        user_id: session.user.id
-      });
+      const { data: answersCount, error: answersError } = await supabase
+        .from('answers')
+        .select('id', { count: 'exact' })
+        .eq('user_id', session.user.id);
 
-      if (!error && userStats) {
-        setStats(userStats);
+      const { data: questionsCount, error: questionsError } = await supabase
+        .from('questions')
+        .select('id', { count: 'exact' })
+        .eq('user_id', session.user.id);
+
+      if (!answersError && !questionsError) {
+        setStats({
+          questions_count: questionsCount?.length || 0,
+          answers_count: answersCount?.length || 0,
+          likes_given_count: 0,
+          likes_received_count: 0
+        });
+      }
+
+      // Buscar pontos do usuário
+      const { data: userPoints, error: pointsError } = await supabase
+        .from('profiles')
+        .select('points')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!pointsError && userPoints) {
+        setPoints(userPoints.points || 0);
       }
 
       setLoading(false);
@@ -46,26 +69,7 @@ export function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="border-b border-border bg-card">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center gap-4">
-              <Link 
-                to="/"
-                className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
-              </Link>
-              <div>
-                <h1 className="text-xl font-semibold">Meu Perfil</h1>
-                <p className="text-sm text-muted-foreground">
-                  Visualize suas estatísticas e informações
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen bg-background pt-20">
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
@@ -74,28 +78,7 @@ export function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header da página */}
-      <div className="border-b border-border bg-card">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <Link 
-              to="/"
-              className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Voltar
-            </Link>
-            <div>
-              <h1 className="text-xl font-semibold">Meu Perfil</h1>
-              <p className="text-sm text-muted-foreground">
-                Visualize suas estatísticas e informações
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div className="min-h-screen bg-background pt-20">
       {/* Conteúdo principal */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Card de Informações do Usuário */}
@@ -108,11 +91,16 @@ export function Profile() {
               <h2 className="text-2xl font-semibold">{user?.email}</h2>
               <p className="text-muted-foreground">
                 Membro desde {new Date(user?.created_at || '').toLocaleDateString()}
+                <br />
+                <span className="flex items-center gap-1">
+                  <Coins className="w-4 h-4" />
+                  Você tem {points} pontos
+                </span>
               </p>
             </div>
             <Link 
               to="/configuracoes"
-              className="btn-secondary inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
             >
               <Settings className="h-4 w-4" />
               Editar Perfil

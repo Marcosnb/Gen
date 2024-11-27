@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Check } from 'lucide-react';
 
 // Lista de tags sugeridas com descrições
@@ -99,40 +99,269 @@ const suggestedTags = [
     description: 'Tecnologia e mundo digital'
   },
   { 
-    id: 'compras', 
-    label: 'Compras',
-    description: 'Consumo, produtos, lojas e ofertas'
+    id: 'saude', 
+    label: 'Saúde',
+    description: 'Bem-estar físico, mental e cuidados médicos'
   },
   { 
-    id: 'festa', 
-    label: 'Festa',
-    description: 'Eventos sociais, celebrações e comemorações'
+    id: 'esporte', 
+    label: 'Esporte',
+    description: 'Práticas esportivas e atividades físicas'
   },
-  // Novas tags
   { 
     id: 'jogos', 
     label: 'Jogos',
-    description: 'Videogames, jogos de tabuleiro e entretenimento interativo'
+    description: 'Videogames, jogos de tabuleiro e entretenimento'
   },
   { 
-    id: 'signo', 
-    label: 'Signo',
-    description: 'Astrologia, horóscopo e influências astrais'
+    id: 'tecnologia', 
+    label: 'Tecnologia',
+    description: 'Inovações, gadgets e avanços tecnológicos'
   },
   { 
-    id: 'tempo', 
-    label: 'Tempo',
-    description: 'Clima, previsão do tempo e meteorologia'
+    id: 'arte', 
+    label: 'Arte',
+    description: 'Expressões artísticas, cultura e criatividade'
   },
   { 
-    id: 'redesocial', 
-    label: 'Rede Social',
-    description: 'Facebook, Instagram, Twitter e outras redes sociais'
+    id: 'literatura', 
+    label: 'Literatura',
+    description: 'Livros, leitura e escrita'
   },
   { 
-    id: 'outro', 
-    label: 'Outro',
-    description: 'Outros assuntos não listados nas categorias anteriores'
+    id: 'psicologia', 
+    label: 'Psicologia',
+    description: 'Comportamento humano e saúde mental'
+  },
+  { 
+    id: 'direito', 
+    label: 'Direito',
+    description: 'Questões legais e jurídicas'
+  },
+  { 
+    id: 'meio-ambiente', 
+    label: 'Meio Ambiente',
+    description: 'Sustentabilidade e questões ambientais'
+  },
+  { 
+    id: 'historia', 
+    label: 'História',
+    description: 'Eventos históricos e conhecimento do passado'
+  },
+  { 
+    id: 'ciencia', 
+    label: 'Ciência',
+    description: 'Descobertas científicas e pesquisas'
+  },
+  {
+    id: 'empreendedorismo',
+    label: 'Empreendedorismo',
+    description: 'Negócios, startups e gestão empresarial'
+  },
+  {
+    id: 'financas-pessoais',
+    label: 'Finanças Pessoais',
+    description: 'Educação financeira, investimentos e planejamento'
+  },
+  {
+    id: 'programacao',
+    label: 'Programação',
+    description: 'Desenvolvimento de software e códigos'
+  },
+  {
+    id: 'idiomas',
+    label: 'Idiomas',
+    description: 'Aprendizado de línguas e comunicação'
+  },
+  {
+    id: 'fotografia',
+    label: 'Fotografia',
+    description: 'Técnicas, equipamentos e arte fotográfica'
+  },
+  {
+    id: 'decoracao',
+    label: 'Decoração',
+    description: 'Design de interiores e organização de ambientes'
+  },
+  {
+    id: 'jardinagem',
+    label: 'Jardinagem',
+    description: 'Cultivo de plantas e paisagismo'
+  },
+  {
+    id: 'gastronomia',
+    label: 'Gastronomia',
+    description: 'Arte culinária e experiências gastronômicas'
+  },
+  {
+    id: 'yoga',
+    label: 'Yoga',
+    description: 'Práticas de yoga, meditação e bem-estar'
+  },
+  {
+    id: 'danca',
+    label: 'Dança',
+    description: 'Estilos de dança e expressão corporal'
+  },
+  {
+    id: 'teatro',
+    label: 'Teatro',
+    description: 'Artes cênicas e performances'
+  },
+  {
+    id: 'astronomia',
+    label: 'Astronomia',
+    description: 'Estudo do universo e corpos celestes'
+  },
+  {
+    id: 'matematica',
+    label: 'Matemática',
+    description: 'Números, cálculos e raciocínio lógico'
+  },
+  {
+    id: 'fisica',
+    label: 'Física',
+    description: 'Estudo da matéria, energia e leis naturais'
+  },
+  {
+    id: 'quimica',
+    label: 'Química',
+    description: 'Estudo das substâncias e suas transformações'
+  },
+  {
+    id: 'biologia',
+    label: 'Biologia',
+    description: 'Estudo dos seres vivos e da vida'
+  },
+  {
+    id: 'medicina',
+    label: 'Medicina',
+    description: 'Saúde, tratamentos e procedimentos médicos'
+  },
+  {
+    id: 'nutricao',
+    label: 'Nutrição',
+    description: 'Alimentação saudável e dietas'
+  },
+  {
+    id: 'musculacao',
+    label: 'Musculação',
+    description: 'Treino com pesos e desenvolvimento muscular'
+  },
+  {
+    id: 'corrida',
+    label: 'Corrida',
+    description: 'Prática de corrida e atletismo'
+  },
+  {
+    id: 'marketing-digital',
+    label: 'Marketing Digital',
+    description: 'Estratégias de marketing online e mídias sociais'
+  },
+  {
+    id: 'meditacao',
+    label: 'Meditação',
+    description: 'Práticas meditativas e mindfulness'
+  },
+  {
+    id: 'sustentabilidade',
+    label: 'Sustentabilidade',
+    description: 'Práticas sustentáveis e consciência ambiental'
+  },
+  {
+    id: 'artesanato',
+    label: 'Artesanato',
+    description: 'Trabalhos manuais e criações artesanais'
+  },
+  {
+    id: 'autoconhecimento',
+    label: 'Autoconhecimento',
+    description: 'Desenvolvimento pessoal e autodesenvolvimento'
+  },
+  {
+    id: 'investimentos',
+    label: 'Investimentos',
+    description: 'Mercado financeiro e estratégias de investimento'
+  },
+  {
+    id: 'linguas-estrangeiras',
+    label: 'Línguas Estrangeiras',
+    description: 'Aprendizado de idiomas e culturas'
+  },
+  {
+    id: 'robotica',
+    label: 'Robótica',
+    description: 'Construção e programação de robôs'
+  },
+  {
+    id: 'design-grafico',
+    label: 'Design Gráfico',
+    description: 'Criação visual e design digital'
+  },
+  {
+    id: 'coaching',
+    label: 'Coaching',
+    description: 'Desenvolvimento profissional e mentoria'
+  },
+  {
+    id: 'inteligencia-artificial',
+    label: 'Inteligência Artificial',
+    description: 'IA, machine learning e aplicações inteligentes'
+  },
+  {
+    id: 'chatgpt',
+    label: 'ChatGPT',
+    description: 'Uso e aplicações do ChatGPT e LLMs'
+  },
+  {
+    id: 'machine-learning',
+    label: 'Machine Learning',
+    description: 'Aprendizado de máquina e modelos preditivos'
+  },
+  {
+    id: 'deep-learning',
+    label: 'Deep Learning',
+    description: 'Redes neurais e aprendizado profundo'
+  },
+  {
+    id: 'data-science',
+    label: 'Data Science',
+    description: 'Ciência de dados e análise de dados'
+  },
+  {
+    id: 'startup',
+    label: 'Startup',
+    description: 'Criação e desenvolvimento de startups'
+  },
+  {
+    id: 'venture-capital',
+    label: 'Venture Capital',
+    description: 'Investimentos em startups e financiamento'
+  },
+  {
+    id: 'pitch',
+    label: 'Pitch',
+    description: 'Apresentações para investidores e vendas'
+  },
+  {
+    id: 'mvp',
+    label: 'MVP',
+    description: 'Produto mínimo viável e validação'
+  },
+  {
+    id: 'lean-startup',
+    label: 'Lean Startup',
+    description: 'Metodologia lean e desenvolvimento ágil'
+  },
+  {
+    id: 'aceleradora',
+    label: 'Aceleradora',
+    description: 'Programas de aceleração de startups'
+  },
+  {
+    id: 'computacao-nuvem',
+    label: 'Computação em Nuvem',
+    description: 'Serviços e infraestrutura em nuvem'
   }
 ];
 
@@ -148,6 +377,57 @@ interface TagInputProps {
   maxTags?: number;
 }
 
+// Função para normalizar texto (remover acentos e converter para minúsculo)
+const normalizeText = (text: string): string => {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+};
+
+// Função para calcular a relevância da tag
+const calculateTagRelevance = (tag: Tag, searchTerm: string): number => {
+  const normalizedSearch = normalizeText(searchTerm);
+  const normalizedLabel = normalizeText(tag.label);
+  const normalizedDesc = normalizeText(tag.description || '');
+
+  let score = 0;
+
+  // Correspondência exata com o label
+  if (normalizedLabel === normalizedSearch) score += 100;
+  // Label começa com o termo de busca
+  if (normalizedLabel.startsWith(normalizedSearch)) score += 50;
+  // Label contém o termo de busca
+  if (normalizedLabel.includes(normalizedSearch)) score += 25;
+  // Descrição contém o termo de busca
+  if (normalizedDesc.includes(normalizedSearch)) score += 10;
+
+  return score;
+};
+
+// Função para encontrar tags relacionadas
+const getRelatedTags = (tag: Tag): Tag[] => {
+  const categoryGroups: { [key: string]: string[] } = {
+    'entretenimento': ['cinema', 'tv', 'musica', 'arte', 'jogos'],
+    'saude': ['saude', 'esporte', 'alimentacao', 'psicologia'],
+    'tecnologia': ['tecnologia', 'internet', 'jogos', 'ciencia'],
+    'sociedade': ['politica', 'economia', 'direito', 'meio-ambiente'],
+    'cultura': ['literatura', 'arte', 'historia', 'religiao'],
+    'relacionamentos': ['familia', 'casamento', 'psicologia']
+  };
+
+  // Encontra os grupos que contêm a tag atual
+  const relatedGroups = Object.entries(categoryGroups)
+    .filter(([_, tags]) => tags.includes(tag.id))
+    .flatMap(([_, tags]) => tags);
+
+  // Remove duplicatas e a própria tag
+  const uniqueRelatedIds = [...new Set(relatedGroups)].filter(id => id !== tag.id);
+  
+  return suggestedTags.filter(t => uniqueRelatedIds.includes(t.id));
+};
+
 export function TagInput({ selectedTags, onChange, maxTags = 5 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -155,13 +435,35 @@ export function TagInput({ selectedTags, onChange, maxTags = 5 }: TagInputProps)
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Filtrar tags sugeridas baseado no input e remover as já selecionadas
-  const filteredTags = suggestedTags
-    .filter(tag => 
-      tag.label.toLowerCase().includes(inputValue.toLowerCase()) &&
-      !selectedTags.some(selected => selected.id === tag.id)
-    )
-    .slice(0, 5); // Limitar a 5 sugestões
+  // Filtrar e ordenar tags sugeridas
+  const filteredTags = useMemo(() => {
+    if (!inputValue.trim()) {
+      // Se não houver input, mostrar tags relacionadas ou populares
+      if (selectedTags.length > 0) {
+        const lastTag = selectedTags[selectedTags.length - 1];
+        const relatedTags = getRelatedTags(lastTag);
+        return relatedTags
+          .filter(tag => !selectedTags.some(selected => selected.id === tag.id))
+          .slice(0, 5);
+      }
+      // Tags populares se não houver seleção
+      return suggestedTags
+        .filter(tag => !selectedTags.some(selected => selected.id === tag.id))
+        .slice(0, 5);
+    }
+
+    // Filtrar e ordenar por relevância
+    return suggestedTags
+      .filter(tag => !selectedTags.some(selected => selected.id === tag.id))
+      .map(tag => ({
+        tag,
+        relevance: calculateTagRelevance(tag, inputValue)
+      }))
+      .filter(({ relevance }) => relevance > 0)
+      .sort((a, b) => b.relevance - a.relevance)
+      .map(({ tag }) => tag)
+      .slice(0, 5);
+  }, [inputValue, selectedTags]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
@@ -221,32 +523,35 @@ export function TagInput({ selectedTags, onChange, maxTags = 5 }: TagInputProps)
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap gap-2 p-2 min-h-[42px] rounded-md border border-input bg-background">
-        {selectedTags.map((tag) => (
+      <div className="flex flex-wrap gap-2 p-2 min-h-[56px] bg-background border border-input rounded-lg focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+        {/* Tags selecionadas */}
+        {selectedTags.map(tag => (
           <span
             key={tag.id}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary"
+            className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/10 text-primary rounded-full text-sm"
           >
             {tag.label}
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              className="ml-1 hover:text-primary/80"
+              className="p-0.5 hover:bg-primary/20 rounded-full transition-colors"
             >
               <X className="h-3 w-3" />
             </button>
           </span>
         ))}
+        
+        {/* Input */}
         <input
           ref={inputRef}
           type="text"
           value={inputValue}
           onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
           onFocus={() => setIsOpen(true)}
-          className="flex-1 min-w-[120px] bg-transparent border-none outline-none p-0.5 text-sm"
-          placeholder={selectedTags.length < maxTags ? "Digite para adicionar tags..." : "Limite de tags atingido"}
-          disabled={selectedTags.length >= maxTags}
+          onKeyDown={handleKeyDown}
+          placeholder={selectedTags.length === maxTags ? "Limite de tags atingido" : "Digite para buscar tags..."}
+          disabled={selectedTags.length === maxTags}
+          className="flex-1 min-h-[40px] bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed"
         />
       </div>
 
@@ -254,31 +559,38 @@ export function TagInput({ selectedTags, onChange, maxTags = 5 }: TagInputProps)
       {isOpen && filteredTags.length > 0 && (
         <div
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 py-1 bg-background border border-border rounded-lg shadow-lg divide-y divide-border"
+          className="absolute z-50 w-full mt-1 py-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
         >
+          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground border-b border-border">
+            {selectedTags.length}/{maxTags} tags selecionadas
+          </div>
+          
           {filteredTags.map((tag, index) => (
             <button
               key={tag.id}
               onClick={() => addTag(tag)}
               onMouseEnter={() => setHighlightedIndex(index)}
-              className={`w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors ${
-                index === highlightedIndex ? 'bg-muted' : ''
+              className={`w-full flex items-start gap-3 px-3 py-2 text-sm transition-colors ${
+                index === highlightedIndex ? 'bg-muted' : 'hover:bg-muted/50'
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{tag.label}</span>
-                {index === highlightedIndex && (
-                  <Check className="h-4 w-4 text-primary" />
-                )}
+              <div className="flex-1 text-left">
+                <div className="font-medium">{tag.label}</div>
+                <div className="text-xs text-muted-foreground">{tag.description}</div>
               </div>
-              {tag.description && (
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {tag.description}
-                </p>
+              {index === highlightedIndex && (
+                <Check className="h-4 w-4 text-primary mt-1" />
               )}
             </button>
           ))}
         </div>
+      )}
+
+      {/* Mensagem de limite */}
+      {selectedTags.length === maxTags && (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Você atingiu o limite máximo de {maxTags} tags
+        </p>
       )}
     </div>
   );
