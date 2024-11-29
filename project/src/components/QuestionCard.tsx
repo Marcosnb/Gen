@@ -7,6 +7,7 @@ import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
 import EmojiPicker from 'emoji-picker-react';
+import { FormattedText } from './FormattedText';
 
 interface Answer {
   id: string;
@@ -570,23 +571,25 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                           Excluir pergunta
                         </button>
                       )}
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await supabase.auth.getSession().then(({ data: { session } }) => {
-                            if (session) {
-                              localStorage.setItem('selectedContactId', question.user_id);
-                              navigate('/mensagens');
-                            } else {
-                              navigate('/login');
-                            }
-                          });
-                        }}
-                        className="p-1 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex items-center"
-                        title="Enviar mensagem"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </button>
+                      {question.user_id && session?.user && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await supabase.auth.getSession().then(({ data: { session } }) => {
+                              if (session) {
+                                localStorage.setItem('selectedContactId', question.user_id);
+                                navigate('/mensagens');
+                              } else {
+                                navigate('/login');
+                              }
+                            });
+                          }}
+                          className="p-1 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex items-center"
+                          title="Enviar mensagem"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </button>
+                      )}
                     </h4>
                   </div>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -605,8 +608,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 line-clamp-2 leading-snug">
               {question.title}
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed line-clamp-2 group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors duration-300">
-              {question.content}
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors duration-300 overflow-hidden text-ellipsis">
+              <FormattedText text={question.content} />
+              {question.content.length > 150 && (
+                <span className="text-blue-500 ml-1">...</span>
+              )}
             </p>
           </div>
 
@@ -708,7 +714,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                             </div>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300">
-                            {answer.content}
+                            <FormattedText text={answer.content} />
                           </p>
                         </div>
                       ))}
@@ -758,9 +764,38 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                     <div className="relative">
                       <textarea
                         value={answer}
-                        onChange={(e) => setAnswer(e.target.value)}
+                        onChange={(e) => {
+                          setAnswer(e.target.value);
+                          const textarea = e.target;
+                          const text = textarea.value;
+                          const start = textarea.selectionStart;
+                          const end = textarea.selectionEnd;
+                          
+                          // Find the current word being typed
+                          const beforeCursor = text.slice(0, start);
+                          const afterCursor = text.slice(end);
+                          const wordStart = beforeCursor.lastIndexOf('@');
+                          
+                          if (wordStart !== -1) {
+                            const word = beforeCursor.slice(wordStart);
+                            // Add blue highlight to the @mention
+                            textarea.style.color = 'inherit';
+                            textarea.style.textShadow = 'none';
+                            const range = document.createRange();
+                            const selection = window.getSelection();
+                            range.setStart(textarea.firstChild || textarea, wordStart);
+                            range.setEnd(textarea.firstChild || textarea, start);
+                            if (selection) {
+                              selection.removeAllRanges();
+                              selection.addRange(range);
+                              document.execCommand('foreColor', false, '#3B82F6'); // Blue color
+                              selection.removeAllRanges();
+                              textarea.setSelectionRange(start, start);
+                            }
+                          }
+                        }}
                         placeholder="Digite sua resposta..."
-                        maxLength={150}
+                        maxLength={127}
                         className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-sm focus:outline-none resize-none min-h-[80px] pr-10"
                       />
                       <button
@@ -784,11 +819,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-blue-900/30">
                       <div className="text-xs text-gray-400 dark:text-gray-500">
-                        {answer.length}/150 caracteres
+                        {answer.length}/127 caracteres
                       </div>
                       <button
                         type="submit"
-                        disabled={!answer.trim()}
+                        disabled={!answer.trim() || answer.trim().length === 127}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <Send className="h-4 w-4" />

@@ -24,18 +24,18 @@ export async function generateWithGemini(prompt: string): Promise<GenerateRespon
 }
 
 export const GEMINI_PROMPTS = {
-  title: (currentTitle: string) => `Você é um assistente especializado em melhorar títulos de perguntas técnicas.
+  title: (currentTitle: string) => `Você é um assistente especializado em melhorar títulos de perguntas.
 
 Melhore o seguinte título: "${currentTitle}"
 
-Regras para o novo título:
-1. Mantenha o mesmo tema e contexto do título original
-2. Torne o título mais claro e específico
-3. Use entre 60-100 caracteres
-4. Mantenha em português
-5. Não use emojis ou caracteres especiais
-6. Seja mais direto e objetivo
-7. O título DEVE terminar com um ponto de interrogação (?)
+Regras:
+1. Use no máximo 80 caracteres
+2. Termine com ponto de interrogação (?)
+3. Seja direto e objetivo
+4. Mantenha o mesmo tema e contexto
+5. Mantenha em português
+6. Evite palavras desnecessárias
+7. Comece com "Como", "Qual", "Por que", etc.
 
 Retorne APENAS o título melhorado, sem explicações adicionais.`,
 
@@ -44,17 +44,17 @@ Retorne APENAS o título melhorado, sem explicações adicionais.`,
 Melhore o seguinte conteúdo: "${currentContent}"
 
 Regras:
-1. Use aproximadamente 300 caracteres (é importante usar a maior parte deste limite)
+1. Use aproximadamente 120 caracteres (é importante usar a maior parte deste limite)
 2. Termine a pergunta com ponto de interrogação (?)
 3. Remova quaisquer comentários entre asteriscos (** **)
 4. Mantenha o mesmo tema e contexto
 5. Seja detalhado mas objetivo
 6. Mantenha em português
 7. Inclua informações relevantes como:
-   - Contexto do problema
-   - Detalhes específicos
-   - O que já foi tentado (se mencionado)
-   - Resultado esperado
+ - Contexto do problema
+ - Detalhes específicos
+ - O que já foi tentado (se mencionado)
+ - Resultado esperado
 
-Retorne APENAS o conteúdo melhorado, sem explicações adicionais.`,
+Retorne APENAS o conteúdo melhorado, sem explicações adicionais.`
 };

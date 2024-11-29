@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, ArrowLeft, UserPlus } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, UserPlus, LogIn } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface FormData {
@@ -96,41 +96,41 @@ export function SignUp() {
 
   return (
     <div className="min-h-screen bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="max-w-md w-full">
-        <div className="bg-card rounded-xl border border-border/40 shadow-2xl shadow-primary/5 backdrop-blur-lg">
+      <div className="w-full max-w-sm">
+        <div className="bg-card rounded-2xl border border-border/40 shadow-2xl shadow-primary/5 backdrop-blur-lg overflow-hidden">
           {/* Card Header com Ícone */}
-          <div className="p-6 pb-0 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-              <UserPlus className="h-6 w-6 text-primary" />
+          <div className="p-8 pb-0 text-center">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4 transform hover:scale-105 transition-transform duration-300">
+              <UserPlus className="h-8 w-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
               Crie sua conta
             </h1>
-            <p className="text-sm text-muted-foreground mt-2 mb-6">
-              Junte-se à nossa comunidade de perguntas e respostas
+            <p className="text-sm text-muted-foreground mt-2">
+              Junte-se à nossa comunidade
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 pt-2">
+          <form onSubmit={handleSubmit} className="p-8 pt-6">
             <div className="space-y-4">
               {/* Avatar Preview */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-4">
                 {avatar ? (
                   <div className="relative group">
                     <img
                       src={avatar}
                       alt="Avatar"
-                      className="w-32 h-32 rounded-full border-4 border-background shadow-lg transition-transform group-hover:scale-105"
+                      className="w-28 h-28 rounded-2xl border-4 border-background shadow-lg transition-all group-hover:scale-105 group-hover:rotate-3"
                     />
-                    <div className="absolute inset-0 rounded-full bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <span className="text-xs text-primary font-medium">
+                    <div className="absolute inset-0 rounded-2xl bg-primary/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-xs text-primary font-medium px-3 text-center">
                         Avatar gerado automaticamente
                       </span>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-32 h-32 rounded-full border-4 border-background bg-muted flex items-center justify-center">
-                    <span className="text-muted-foreground text-sm text-center px-4">
+                  <div className="w-28 h-28 rounded-2xl border-4 border-background bg-muted flex items-center justify-center">
+                    <span className="text-muted-foreground text-xs text-center px-3">
                       Digite seu nome para gerar um avatar
                     </span>
                   </div>
@@ -139,16 +139,9 @@ export function SignUp() {
 
               {/* Nome */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label htmlFor="name" className="text-sm font-medium text-muted-foreground">
-                    Nome completo
-                  </label>
-                  {error?.includes('Já existe um usuário com este nome') && (
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-md">
-                      Já existe um usuário com este nome
-                    </span>
-                  )}
-                </div>
+                <label htmlFor="name" className="text-sm font-medium text-muted-foreground">
+                  Nome completo
+                </label>
                 <input
                   type="text"
                   id="name"
@@ -157,7 +150,7 @@ export function SignUp() {
                     setFormData({ ...formData, name: e.target.value });
                     setError(null);
                   }}
-                  className={`w-full px-3 py-2.5 rounded-lg bg-background/50 border focus:ring-2 transition-all outline-none ${
+                  className={`w-full px-4 py-3 rounded-xl bg-background/50 border focus:ring-2 transition-all outline-none ${
                     error?.includes('Já existe um usuário com este nome')
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                       : 'border-border/50 focus:border-primary/50 focus:ring-primary/20'
@@ -165,14 +158,20 @@ export function SignUp() {
                   placeholder="Seu nome completo"
                   required
                 />
+                {error?.includes('Já existe um usuário com este nome') && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                    <span className="inline-block w-1 h-1 rounded-full bg-red-500"></span>
+                    Já existe um usuário com este nome
+                  </p>
+                )}
               </div>
 
               {/* Gênero */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">Gênero</label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <label className={`
-                    flex items-center justify-center p-3 rounded-lg cursor-pointer transition-all
+                    flex items-center justify-center py-3 rounded-xl cursor-pointer transition-all
                     ${formData.gender === 'male' 
                       ? 'bg-primary/10 border-primary text-primary' 
                       : 'border border-border/50 hover:border-primary/30 hover:bg-primary/5'}
@@ -190,7 +189,7 @@ export function SignUp() {
                     </span>
                   </label>
                   <label className={`
-                    flex items-center justify-center p-3 rounded-lg cursor-pointer transition-all
+                    flex items-center justify-center py-3 rounded-xl cursor-pointer transition-all
                     ${formData.gender === 'female' 
                       ? 'bg-primary/10 border-primary text-primary' 
                       : 'border border-border/50 hover:border-primary/30 hover:bg-primary/5'}
@@ -220,7 +219,7 @@ export function SignUp() {
                   id="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background/50 border border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
                   placeholder="seu@email.com"
                   required
                 />
@@ -237,14 +236,14 @@ export function SignUp() {
                     id="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-lg bg-background/50 border border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none pr-10"
+                    className="w-full px-4 py-3 rounded-xl bg-background/50 border border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none pr-10"
                     placeholder="••••••••"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -257,7 +256,7 @@ export function SignUp() {
 
               {/* Mostrar erro se houver */}
               {error && !error.includes('Já existe um usuário com este nome') && (
-                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-sm">
                   {error}
                 </div>
               )}
@@ -266,8 +265,8 @@ export function SignUp() {
               <button 
                 type="submit" 
                 disabled={loading}
-                className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-2.5 rounded-lg transition-colors mt-6 flex items-center justify-center gap-2 ${
-                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                className={`w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-2 mt-2 ${
+                  loading ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[0.98] active:scale-[0.97]'
                 }`}
               >
                 {loading ? (
@@ -284,25 +283,24 @@ export function SignUp() {
               </button>
 
               {/* Link para login */}
-              <p className="text-sm text-center text-muted-foreground mt-6">
-                Já tem uma conta?{' '}
-                <Link to="/login" className="text-primary hover:text-primary/80 transition-colors font-medium">
-                  Fazer login
-                </Link>
-              </p>
+              <div className="relative mt-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border/50"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Ou</span>
+                </div>
+              </div>
+
+              <Link 
+                to="/login" 
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border/50 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background/50 transition-all hover:scale-[0.98] active:scale-[0.97]"
+              >
+                <LogIn className="h-4 w-4" />
+                Entrar com uma conta existente
+              </Link>
             </div>
           </form>
-
-          {/* Botão voltar */}
-          <div className="p-6 pt-0 text-center border-t border-border/40">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
-            >
-              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-              Voltar para a página inicial
-            </Link>
-          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
-import { LoginPrompt } from './components/LoginPrompt';
 import { TermsNotice } from './components/TermsNotice';
 import { Home } from './pages/Home';
 import { AskQuestion } from './pages/AskQuestion';
@@ -39,7 +38,6 @@ function App() {
               </div>
             </main>
 
-            <LoginPrompt />
             <TermsNotice />
           </div>
         </BrowserRouter>

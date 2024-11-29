@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, PlusCircle, Bell, User, Menu, Moon, Sun, Settings, MessageCircle } from 'lucide-react';
+import { Search, PlusCircle, Bell, User, Menu, Moon, Sun, Settings, MessageCircle, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -300,77 +300,79 @@ export function Header() {
 
           <div className="flex items-center gap-4">
             {user && (
-              <Link 
-                to="/perguntar" 
-                className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 active:scale-95"
-              >
-                <PlusCircle className="h-5 w-5" />
-                <span>Fazer Pergunta</span>
-              </Link>
-            )}
-
-            <div className="flex items-center gap-2">
-              <Link
-                to="/mensagens"
-                className="relative p-2 rounded-lg hover:bg-muted/80 transition-colors duration-200"
-              >
-                <MessageCircle className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-medium text-white bg-red-500 rounded-full">
-                    {unreadCount}
-                  </span>
-                )}
-              </Link>
-
-              <div 
-                className="relative"
-                onMouseEnter={() => handleMouseEnter('notifications')}
-                onMouseLeave={() => {
-                  const timeout = setTimeout(() => {
-                    setShowNotifications(false);
-                  }, 200);
-                  setNotificationHoverTimeout(timeout);
-                }}
-                ref={notificationRef}
-              >
-                <button
-                  className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+              <>
+                <Link 
+                  to="/perguntar" 
+                  className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 active:scale-95"
                 >
-                  <Bell className="h-5 w-5" />
-                  {notificationUnreadCount > 0 && (
-                    <span className="absolute top-0 right-0 -mt-1 -mr-1 px-1.5 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full">
-                      {notificationUnreadCount}
-                    </span>
-                  )}
-                </button>
+                  <PlusCircle className="h-5 w-5" />
+                  <span>Fazer Pergunta</span>
+                </Link>
 
-                <NotificationModal
-                  show={showNotifications}
-                  onMouseEnter={() => {
-                    if (notificationHoverTimeout) clearTimeout(notificationHoverTimeout);
-                  }}
-                  onMouseLeave={() => {
-                    const timeout = setTimeout(() => {
-                      setShowNotifications(false);
-                    }, 200);
-                    setNotificationHoverTimeout(timeout);
-                  }}
-                  userId={user?.id || ''}
-                />
-              </div>
-            </div>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to="/mensagens"
+                    className="relative p-2 rounded-lg hover:bg-muted/80 transition-colors duration-200"
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-medium text-white bg-red-500 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
 
-            <button 
-              onClick={toggleDarkMode}
-              className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              aria-label={isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
-            >
-              {isDarkMode ? (
-                <Moon className="h-5 w-5" />
-              ) : (
-                <Sun className="h-5 w-5 text-amber-500" />
-              )}
-            </button>
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => handleMouseEnter('notifications')}
+                    onMouseLeave={() => {
+                      const timeout = setTimeout(() => {
+                        setShowNotifications(false);
+                      }, 200);
+                      setNotificationHoverTimeout(timeout);
+                    }}
+                    ref={notificationRef}
+                  >
+                    <button
+                      className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    >
+                      <Bell className="h-5 w-5" />
+                      {notificationUnreadCount > 0 && (
+                        <span className="absolute top-0 right-0 -mt-1 -mr-1 px-1.5 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full">
+                          {notificationUnreadCount}
+                        </span>
+                      )}
+                    </button>
+
+                    <NotificationModal
+                      show={showNotifications}
+                      onMouseEnter={() => {
+                        if (notificationHoverTimeout) clearTimeout(notificationHoverTimeout);
+                      }}
+                      onMouseLeave={() => {
+                        const timeout = setTimeout(() => {
+                          setShowNotifications(false);
+                        }, 200);
+                        setNotificationHoverTimeout(timeout);
+                      }}
+                      userId={user?.id || ''}
+                    />
+                  </div>
+
+                  <button 
+                    onClick={toggleDarkMode}
+                    className="p-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    aria-label={isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+                  >
+                    {isDarkMode ? (
+                      <Moon className="h-5 w-5" />
+                    ) : (
+                      <Sun className="h-5 w-5 text-amber-500" />
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
 
             {user ? (
               <div 
@@ -466,6 +468,20 @@ export function Header() {
                         <div>
                           <p className="font-medium">Configurações</p>
                           <p className="text-xs text-muted-foreground">Personalize sua experiência</p>
+                        </div>
+                      </Link>
+
+                      <Link
+                        to="/privacidade"
+                        className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/50 rounded-lg transition-all duration-300 mt-1 group"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary transition-transform duration-300 group-hover:scale-110">
+                          <ShieldCheck className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Termos e Privacidade</p>
+                          <p className="text-xs text-muted-foreground">Leia sobre nossas políticas de privacidade</p>
                         </div>
                       </Link>
 

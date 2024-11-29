@@ -1,16 +1,38 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { X, ShieldCheck, ChevronRight, Cookie, ChevronUp } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { X, ShieldCheck, ChevronRight, Cookie, ChevronUp, PlusCircle } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 
 export function TermsNotice() {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const location = useLocation();
 
   useEffect(() => {
+    // Só mostra o aviso na página inicial
+    if (location.pathname !== '/') {
+      setIsVisible(false);
+      return;
+    }
+
     // Atrasa a exibição do card para uma melhor experiência
     const showTimeout = setTimeout(() => setIsVisible(true), 1500);
     return () => clearTimeout(showTimeout);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    // Check for session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleClose = () => {
@@ -27,82 +49,17 @@ export function TermsNotice() {
 
   return (
     <>
-      {/* Versão Mobile - Botão Flutuante */}
-      <div className="md:hidden">
-        <button
-          onClick={toggleExpand}
-          className={`fixed bottom-4 right-4 flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 ${isExpanded ? 'scale-95' : 'scale-100'}`}
-        >
-          <ShieldCheck className="h-5 w-5" />
-          <span className="font-medium">Termos e Privacidade</span>
-        </button>
-
-        {/* Modal Mobile */}
-        {isExpanded && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 md:hidden">
-            <div className="fixed inset-x-0 bottom-0 bg-card border-t border-border animate-slide-up">
-              {/* Cabeçalho do Modal */}
-              <div className="flex items-center justify-between p-4 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-primary" />
-                  <h3 className="font-semibold">Termos e Privacidade</h3>
-                </div>
-                <button
-                  onClick={toggleExpand}
-                  className="p-2 hover:bg-muted rounded-lg transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Conteúdo do Modal */}
-              <div className="p-4 space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Valorizamos sua privacidade. Ao usar nossa plataforma, você concorda com nossos termos e políticas.
-                </p>
-
-                <div className="space-y-2">
-                  <Link 
-                    to="/termos" 
-                    className="flex items-center justify-between w-full p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                    onClick={toggleExpand}
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Termos de Uso</span>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                  
-                  <Link 
-                    to="/privacidade" 
-                    className="flex items-center justify-between w-full p-3 rounded-lg bg-muted hover:bg-muted/80 transition-colors"
-                    onClick={toggleExpand}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Cookie className="h-4 w-4 text-primary" />
-                      <span className="text-sm font-medium">Política de Privacidade</span>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Link>
-                </div>
-
-                <div className="pt-2 border-t border-border">
-                  <p className="text-xs text-muted-foreground">
-                    Você pode ajustar suas preferências a qualquer momento nas{' '}
-                    <Link 
-                      to="/configuracoes"
-                      onClick={toggleExpand}
-                      className="text-primary hover:text-primary/90 hover:underline transition-colors"
-                    >
-                      configurações
-                    </Link>
-                    .
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Versão Mobile - Botões Flutuantes */}
+      <div className="md:hidden flex flex-col gap-3 fixed bottom-4 right-4 z-50">
+        {session && (
+          <Link
+            to="/perguntar"
+            className="flex items-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all duration-300 hover:scale-105 active:scale-95"
+          >
+            <PlusCircle className="h-5 w-5" />
+            <span className="font-medium">Fazer Pergunta</span>
+          </Link>
+        
         )}
       </div>
 

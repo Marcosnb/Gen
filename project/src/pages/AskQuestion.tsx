@@ -178,16 +178,22 @@ export function AskQuestion() {
                   currentTitle={content}
                 />
               </div>
-              <textarea
-                id="content"
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={12}
-                className="input w-full resize-y"
-                placeholder="Descreva todos os detalhes que possam ajudar alguém a responder sua pergunta..."
-                required
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <textarea
+                  id="content"
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  rows={12}
+                  className="input w-full resize-y pr-16"
+                  placeholder="Descreva todos os detalhes que possam ajudar alguém a responder sua pergunta..."
+                  required
+                  disabled={isLoading}
+                  maxLength={120}
+                />
+                <span className="absolute bottom-3 right-3 text-xs text-muted-foreground">
+                  {content.length}/120
+                </span>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Inclua todo o contexto necessário, código relevante e o que você já tentou fazer
               </p>
