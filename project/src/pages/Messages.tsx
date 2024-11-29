@@ -60,6 +60,13 @@ export function Messages() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Efeito para inicializar o serviço de limpeza de mensagens
+  useEffect(() => {
+    if (session?.user?.id) {
+      setupMessageCleanup();
+    }
+  }, [session?.user?.id]);
+
   // Efeito para verificar o localStorage quando os contatos são carregados
   useEffect(() => {
     const savedContactId = localStorage.getItem('selectedContactId');

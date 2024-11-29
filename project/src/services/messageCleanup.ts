@@ -1,19 +1,26 @@
 import { supabase } from '../lib/supabase';
 
 export const setupMessageCleanup = () => {
-  const scheduleNextMidnight = () => {
+  const scheduleNextCleanup = () => {
     const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0);
+    const targetTime = new Date(now);
+    targetTime.setHours(0, 13, 0, 0); // Define para 00:13
+
+    // Se já passou das 00:13 hoje, agenda para amanhã
+    if (now > targetTime) {
+      targetTime.setDate(targetTime.getDate() + 1);
+    }
     
-    const timeUntilMidnight = midnight.getTime() - now.getTime();
+    const timeUntilCleanup = targetTime.getTime() - now.getTime();
+    console.log('Próxima limpeza agendada para:', targetTime);
     
-    // Agenda a primeira execução para a próxima meia-noite
+    // Agenda a primeira execução
     setTimeout(async () => {
+      console.log('Iniciando limpeza de mensagens...');
       await deleteReadMessages();
-      // Depois configura para rodar todos os dias à meia-noite
+      // Depois configura para rodar todos os dias no mesmo horário
       setInterval(deleteReadMessages, 24 * 60 * 60 * 1000);
-    }, timeUntilMidnight);
+    }, timeUntilCleanup);
   };
 
   const deleteReadMessages = async () => {
@@ -21,11 +28,11 @@ export const setupMessageCleanup = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
 
+      console.log('Deletando mensagens marcadas como lidas...');
       const { error } = await supabase
         .from('messages')
         .delete()
-        .not('read_at', 'is', null)
-        .eq('to_user_id', session.user.id);
+        .eq('read_boolean', true);
 
       if (error) {
         console.error('Erro ao deletar mensagens:', error);
@@ -38,5 +45,5 @@ export const setupMessageCleanup = () => {
   };
 
   // Inicia o agendamento
-  scheduleNextMidnight();
+  scheduleNextCleanup();
 };
