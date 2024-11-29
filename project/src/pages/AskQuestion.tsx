@@ -269,7 +269,7 @@ export function AskQuestion() {
                           />
                         </svg>
                         <span className="relative top-px">
-                          Não será possível editar ou apagar depois
+                          Não será possivel apagar ou ganhar pontos
                         </span>
                       </span>
                     )}
