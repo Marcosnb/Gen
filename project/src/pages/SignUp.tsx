@@ -140,22 +140,24 @@ export function SignUp() {
               {/* Nome */}
               <div className="space-y-2">
                 <label htmlFor="name" className="text-sm font-medium text-muted-foreground">
-                  Nome completo
+                  Nome
                 </label>
                 <input
                   type="text"
                   id="name"
                   value={formData.name}
                   onChange={(e) => {
-                    setFormData({ ...formData, name: e.target.value });
+                    const fullName = e.target.value;
+                    setFormData({ ...formData, name: fullName });
                     setError(null);
                   }}
+                  maxLength={10}
                   className={`w-full px-4 py-3 rounded-xl bg-background/50 border focus:ring-2 transition-all outline-none ${
                     error?.includes('Já existe um usuário com este nome')
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
                       : 'border-border/50 focus:border-primary/50 focus:ring-primary/20'
                   }`}
-                  placeholder="Seu nome completo"
+                  placeholder="Seu nome"
                   required
                 />
                 {error?.includes('Já existe um usuário com este nome') && (

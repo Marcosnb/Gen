@@ -201,12 +201,15 @@ export function Settings() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <label htmlFor="fullName" className="text-sm font-medium">
-                    Nome Completo
+                    Nome
                   </label>
                   {error?.includes('Já existe um usuário com este nome') && (
-                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-md">
-                      Já existe um usuário com este nome
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                      <p className="text-xs text-red-500">
+                        Já existe um usuário com este nome
+                      </p>
+                    </div>
                   )}
                 </div>
                 <input
@@ -214,11 +217,13 @@ export function Settings() {
                   type="text"
                   value={fullName}
                   onChange={(e) => {
-                    setFullName(e.target.value);
+                    const fullName = e.target.value;
+                    setFullName(fullName);
                     setError(null);
                   }}
+                  maxLength={10}
                   className={`input w-full ${error?.includes('Já existe um usuário com este nome') ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
-                  placeholder="Seu nome completo"
+                  placeholder="Seu nome"
                   required
                 />
                 <p className="text-xs text-muted-foreground">
