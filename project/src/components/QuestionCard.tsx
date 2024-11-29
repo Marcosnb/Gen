@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
-import EmojiPicker from 'emoji-picker-react';
 import { FormattedText } from './FormattedText';
 
 interface Answer {
@@ -39,7 +38,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const answersContainerRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -521,13 +519,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
           <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400">
             <div className="flex flex-col items-center group/stat relative">
               <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm">
-                <MessageCircle className="h-4 w-4" />
-              </button>
-              <span className="text-xs mt-1.5 transition-all duration-300 group-hover/stat:text-blue-500">{answerCount || 0}</span>
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300 whitespace-nowrap">Respostas</span>
-            </div>
-            <div className="flex flex-col items-center group/stat relative">
-              <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm">
                 <Eye className="h-4 w-4" />
               </button>
               <span className="text-xs mt-1.5 transition-all duration-300 group-hover/stat:text-blue-500">{question.views}</span>
@@ -764,58 +755,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                     <div className="relative">
                       <textarea
                         value={answer}
-                        onChange={(e) => {
-                          setAnswer(e.target.value);
-                          const textarea = e.target;
-                          const text = textarea.value;
-                          const start = textarea.selectionStart;
-                          const end = textarea.selectionEnd;
-                          
-                          // Find the current word being typed
-                          const beforeCursor = text.slice(0, start);
-                          const afterCursor = text.slice(end);
-                          const wordStart = beforeCursor.lastIndexOf('@');
-                          
-                          if (wordStart !== -1) {
-                            const word = beforeCursor.slice(wordStart);
-                            // Add blue highlight to the @mention
-                            textarea.style.color = 'inherit';
-                            textarea.style.textShadow = 'none';
-                            const range = document.createRange();
-                            const selection = window.getSelection();
-                            range.setStart(textarea.firstChild || textarea, wordStart);
-                            range.setEnd(textarea.firstChild || textarea, start);
-                            if (selection) {
-                              selection.removeAllRanges();
-                              selection.addRange(range);
-                              document.execCommand('foreColor', false, '#3B82F6'); // Blue color
-                              selection.removeAllRanges();
-                              textarea.setSelectionRange(start, start);
-                            }
-                          }
-                        }}
+                        onChange={(e) => setAnswer(e.target.value)}
                         placeholder="Digite sua resposta..."
                         maxLength={127}
                         className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-sm focus:outline-none resize-none min-h-[80px] pr-10"
                       />
-                      <button
-                        type="button"
-                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="absolute right-2 top-2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-blue-900/20 transition-colors"
-                      >
-                        <Smile className="h-5 w-5" />
-                      </button>
-                      {showEmojiPicker && (
-                        <div className="absolute right-0 bottom-full mb-2 z-50">
-                          <EmojiPicker
-                            onEmojiClick={(emojiData) => {
-                              setAnswer(prev => prev + emojiData.emoji);
-                              setShowEmojiPicker(false);
-                            }}
-                            theme="dark"
-                          />
-                        </div>
-                      )}
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-blue-900/30">
                       <div className="text-xs text-gray-400 dark:text-gray-500">
