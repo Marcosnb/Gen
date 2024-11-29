@@ -4,9 +4,9 @@ export const setupMessageCleanup = () => {
   const scheduleNextCleanup = () => {
     const now = new Date();
     const targetTime = new Date(now);
-    targetTime.setHours(0, 13, 0, 0); // Define para 00:13
+    targetTime.setHours(0, 0, 0, 0); // Define para 00:00
 
-    // Se já passou das 00:13 hoje, agenda para amanhã
+    // Se já passou das 00:00 hoje, agenda para amanhã
     if (now > targetTime) {
       targetTime.setDate(targetTime.getDate() + 1);
     }
