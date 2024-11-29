@@ -65,7 +65,7 @@ export function AskQuestion() {
         title: title.trim(),
         content: content.trim(),
         is_anonymous: isAnonymous,
-        tags: tags.map(tag => tag.label),
+        tags: tags.map(tag => tag.id),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         views: 0,
@@ -90,7 +90,7 @@ export function AskQuestion() {
           .single();
 
         // Calcular novos pontos
-        const newPoints = (currentPoints?.points || 0) + 50;
+        const newPoints = (currentPoints?.points || 0) + 7;
 
         // Atualizar os pontos
         const { error: pointsError } = await supabase
@@ -103,7 +103,7 @@ export function AskQuestion() {
         }
       }
 
-      setSuccess(isAnonymous ? 'Pergunta publicada com sucesso!' : 'Pergunta publicada com sucesso! Você ganhou 50 pontos!');
+      setSuccess(isAnonymous ? 'Pergunta publicada com sucesso!' : 'Pergunta publicada com sucesso! Você ganhou 7 pontos!');
       resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao publicar pergunta');

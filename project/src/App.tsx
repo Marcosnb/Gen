@@ -12,33 +12,39 @@ import { Profile } from './pages/Profile';
 import { Terms } from './pages/Terms';
 import { Privacy } from './pages/Privacy';
 import { Messages } from './pages/Messages';
+import { OnlineStatusProvider } from './contexts/OnlineStatusContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-background text-foreground flex flex-col">
-        <Header />
-        
-        <main className="flex-1 container mx-auto py-8 px-4 sm:px-6 lg:px-8">
-          <div className="animate-slide-in">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/perguntar" element={<AskQuestion />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/configuracoes" element={<Settings />} />
-              <Route path="/mensagens" element={<Messages />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/termos" element={<Terms />} />
-              <Route path="/privacidade" element={<Privacy />} />
-            </Routes>
-          </div>
-        </main>
+    <AuthProvider>
+      <OnlineStatusProvider>
+        <BrowserRouter>
+          <div className="min-h-screen bg-background text-foreground flex flex-col">
+            <Header />
+            
+            <main className="flex-1 container mx-auto py-8 px-4 sm:px-6 lg:px-8">
+              <div className="animate-slide-in">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/perguntar" element={<AskQuestion />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<SignUp />} />
+                  <Route path="/configuracoes" element={<Settings />} />
+                  <Route path="/mensagens" element={<Messages />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/termos" element={<Terms />} />
+                  <Route path="/privacidade" element={<Privacy />} />
+                </Routes>
+              </div>
+            </main>
 
-        <LoginPrompt />
-        <TermsNotice />
-      </div>
-    </BrowserRouter>
+            <LoginPrompt />
+            <TermsNotice />
+          </div>
+        </BrowserRouter>
+      </OnlineStatusProvider>
+    </AuthProvider>
   );
 }
 

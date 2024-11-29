@@ -1,9 +1,12 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
+import { suggestedTags } from './TagInput';
+import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
 
 interface Answer {
   id: string;
@@ -22,6 +25,7 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, onClick }: QuestionCardProps) {
+  const navigate = useNavigate();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [answer, setAnswer] = useState('');
   const [isUpvoted, setIsUpvoted] = useState(false);
@@ -32,6 +36,9 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [visibleCount, setVisibleCount] = useState(2);
   const [startIndex, setStartIndex] = useState(0);
   const answersContainerRef = useRef<HTMLDivElement>(null);
+  const [session, setSession] = useState<any>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -159,17 +166,53 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         },
         async (payload) => {
           console.log('Mudança detectada:', payload);
-          // Recarregar todas as respostas quando houver mudança
-          await fetchAnswers();
+          if (payload.eventType === 'DELETE') {
+            // Atualizar localmente para remoção
+            setAnswers(current => current.filter(a => a.id !== payload.old.id));
+            setAnswerCount(prev => prev - 1);
+          } else {
+            // Recarregar todas as respostas para outros tipos de mudança
+            await fetchAnswers();
+          }
         }
       )
       .subscribe();
 
-    // Cleanup: desinscrever do canal quando o componente for desmontado
     return () => {
       channel.unsubscribe();
     };
   }, [question.id]);
+
+  useEffect(() => {
+    // Carregar a sessão do usuário
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Inscrever-se para mudanças na sessão
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', session.user.id)
+          .single();
+        
+        setIsAdmin(!!profile?.is_admin);
+      }
+    };
+
+    checkAdminStatus();
+  }, []);
 
   const handleAccordionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -217,22 +260,24 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
-      // Atualizar pontos do usuário
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('points')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!userError && userData) {
-        const newPoints = (userData.points || 0) + 50;
-        const { error: pointsError } = await supabase
+      // Atualizar pontos do usuário apenas se não for o autor da pergunta
+      if (session.user.id !== question.user_id) {
+        const { data: userData, error: userError } = await supabase
           .from('profiles')
-          .update({ points: newPoints })
-          .eq('id', session.user.id);
+          .select('points')
+          .eq('id', session.user.id)
+          .single();
 
-        if (pointsError) {
-          console.error('Erro ao atualizar pontos:', pointsError);
+        if (!userError && userData) {
+          const newPoints = (userData.points || 0) + 20;
+          const { error: pointsError } = await supabase
+            .from('profiles')
+            .update({ points: newPoints })
+            .eq('id', session.user.id);
+
+          if (pointsError) {
+            console.error('Erro ao atualizar pontos:', pointsError);
+          }
         }
       }
 
@@ -261,13 +306,197 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     }
   };
 
+  const handleDeleteAnswer = async (answerId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      // Verificar se é admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', session.user.id)
+        .single();
+
+      // Encontrar a resposta para verificar o dono
+      const answer = answers.find(a => a.id === answerId);
+      
+      // Só permite deletar se for admin ou dono da resposta
+      if (!profile?.is_admin && session.user.id !== answer?.user_id) {
+        alert('Você não tem permissão para excluir esta resposta');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('answers')
+        .delete()
+        .eq('id', answerId);
+
+      if (error) throw error;
+
+      // Atualização local será feita pelo listener em tempo real
+    } catch (error) {
+      console.error('Erro ao deletar resposta:', error);
+      alert('Erro ao deletar resposta');
+    }
+  };
+
+  const handleDeleteQuestion = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      // Verificar se é admin
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', session.user.id)
+        .single();
+
+      // Só permite deletar se for admin ou dono da pergunta
+      if (!profile?.is_admin && session.user.id !== question.user_id) {
+        alert('Você não tem permissão para excluir esta pergunta');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', question.id);
+
+      if (error) throw error;
+      
+      // A atualização será feita pelo listener em tempo real na página Home
+    } catch (error) {
+      console.error('Erro ao deletar pergunta:', error);
+      alert('Erro ao deletar pergunta');
+    }
+  };
+
+  const getTagIcon = (tag: string) => {
+    // A tag agora é o ID, então vamos tentar encontrar a tag sugerida correspondente
+    const suggestedTag = suggestedTags.find(t => t.id === tag);
+    
+    // Se encontrarmos a tag sugerida, usamos seu ID
+    const tagToUse = suggestedTag ? suggestedTag.id : tag.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-');
+
+    const tagMap: { [key: string]: any } = {
+      // Entretenimento e Cultura
+      'cinema': Film,
+      'filmes': Film,
+      'musica': Music,
+      'jogos': Gamepad,
+      'games': Gamepad,
+      'fotografia': Camera,
+      'radio': Radio,
+      'tv': Tv,
+      'televisao': Tv,
+      'teatro': Theater,
+      'arte': PenTool,
+      'cultura': Book,
+      'entretenimento': Popcorn,
+      'lazer': Coffee,
+      'diversao': Star,
+      'hobby': Heart,
+      'literatura': Book,
+      'historia': Book,
+
+      // Tecnologia e Programação
+      'programacao': Code,
+      'javascript': FileCode,
+      'python': FileCode,
+      'java': FileCode,
+      'typescript': FileCode,
+      'react': Code,
+      'node': Code,
+      'vue': Code,
+      'angular': Code,
+      'php': FileCode,
+      'desenvolvimento': Laptop,
+      'web': Globe,
+      'frontend': PenTool,
+      'backend': Database,
+      'fullstack': Code,
+      'mobile': Smartphone,
+      'api': Settings,
+      'banco-de-dados': Database,
+      'seguranca': Shield,
+      'devops': Wrench,
+      'cloud': Cloud,
+      'hardware': Cpu,
+      'software': Settings,
+      'framework': Code,
+      'biblioteca': Book,
+      'tutorial': Book,
+      'duvida': HelpCircle,
+      'iniciante': Lightbulb,
+      'avancado': Zap,
+      'carreira': Users,
+      'dica': Lightbulb,
+      'tecnologia': Laptop,
+      'internet': Globe,
+      'ciencia': Microscope,
+
+      // Negócios e Finanças
+      'economia': Wallet,
+      'financas-pessoais': Wallet,
+      'empreendedorismo': Building2,
+      'trabalho': Briefcase,
+      'direito': Scale,
+
+      // Educação
+      'escola': Book,
+      'faculdade': Book,
+      'matematica': Code,
+      'idiomas': Languages,
+
+      // Saúde e Bem-estar
+      'saude': Heart,
+      'esporte': Star,
+      'yoga': Heart,
+      'psicologia': Brain,
+
+      // Casa e Estilo de Vida
+      'decoracao': Brush,
+      'jardinagem': Flower,
+      'gastronomia': UtensilsCrossed,
+      'alimentacao': Coffee,
+      'moda': Shirt,
+      'beleza': Sparkles,
+
+      // Sociedade e Relacionamentos
+      'politica': Users,
+      'religiao': Book,
+      'familia': Users,
+      'casamento': Heart,
+      'sexo': Heart,
+
+      // Outros
+      'meio-ambiente': Leaf,
+      'animais': Heart,
+      'viagem': Globe,
+      'futebol': Star
+    };
+    
+    // Retornar o ícone correspondente ou o ícone padrão (Tag)
+    return tagMap[tagToUse] || Tag;
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setAnswer(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
   return (
     <div
       onClick={onClick}
-      className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-gray-800 transition-all duration-300 overflow-hidden"
+      className="relative bg-white dark:bg-[#0E072C] rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-blue-900/50 transition-all duration-300 overflow-hidden"
     >
       {/* Subtle Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-blue-50/30 dark:from-blue-900/20 dark:to-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-blue-50/30 dark:from-blue-900/10 dark:to-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
       <div className="relative grid grid-cols-[auto_1fr] gap-6 p-6">
         {/* Voting and Interaction Column */}
@@ -300,15 +529,15 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
           {/* Stats Icons with Tooltips */}
           <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400">
             <div className="flex flex-col items-center group/stat relative">
-              <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/30 transform hover:scale-105 backdrop-blur-sm">
-                <MessageCircle className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+              <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm">
+                <MessageCircle className="h-4 w-4" />
               </button>
               <span className="text-xs mt-1.5 transition-all duration-300 group-hover/stat:text-blue-500">{answerCount || 0}</span>
               <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300 whitespace-nowrap">Respostas</span>
             </div>
             <div className="flex flex-col items-center group/stat relative">
-              <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/30 transform hover:scale-105 backdrop-blur-sm">
-                <Eye className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
+              <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm">
+                <Eye className="h-4 w-4" />
               </button>
               <span className="text-xs mt-1.5 transition-all duration-300 group-hover/stat:text-blue-500">{question.views}</span>
               <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300 whitespace-nowrap">Visualizações</span>
@@ -336,15 +565,47 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                 )}
               </div>
               <div>
-                <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
-                  {question.profiles?.full_name || 'Usuário'}
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {formatDistanceToNow(new Date(question.created_at), {
-                    locale: ptBR,
-                    addSuffix: true,
-                  })}
-                </p>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 flex items-center gap-2">
+                      {question.profiles?.full_name || 'Usuário'}
+                      {(isAdmin || session?.user?.id === question.user_id) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteQuestion();
+                          }}
+                          className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                        >
+                          Excluir pergunta
+                        </button>
+                      )}
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await supabase.auth.getSession().then(({ data: { session } }) => {
+                            if (session) {
+                              localStorage.setItem('selectedContactId', question.user_id);
+                              navigate('/mensagens');
+                            } else {
+                              navigate('/login');
+                            }
+                          });
+                        }}
+                        className="p-1 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex items-center"
+                        title="Enviar mensagem"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </button>
+                    </h4>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatDistanceToNow(new Date(question.created_at), {
+                      locale: ptBR,
+                      addSuffix: true,
+                    })}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -361,22 +622,28 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
           {/* Interactive Tags */}
           <div className="flex flex-wrap gap-2">
-            {question.tags?.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-all hover:scale-105 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 backdrop-blur-sm cursor-pointer"
-              >
-                <Tag className="w-3 h-3" />
-                {tag}
-              </span>
-            ))}
+            {question.tags?.map((tagId) => {
+              // Encontrar a tag sugerida correspondente
+              const suggestedTag = suggestedTags.find(t => t.id === tagId);
+              const TagIcon = getTagIcon(tagId);
+              return (
+                <span
+                  key={tagId}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-medium transition-all hover:scale-105 hover:bg-blue-100/80 dark:hover:bg-blue-900/40 backdrop-blur-sm cursor-pointer"
+                  title={suggestedTag?.label || tagId}
+                >
+                  <TagIcon className="w-3 h-3" />
+                  {suggestedTag?.label || tagId}
+                </span>
+              );
+            })}
           </div>
 
           {/* Answer Section with Smooth Transitions */}
           <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={handleAccordionClick}
-              className="flex items-center justify-between w-full px-4 py-2.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all rounded-xl hover:bg-blue-50/80 dark:hover:bg-blue-900/20 backdrop-blur-sm"
+              className="flex items-center justify-between w-full px-4 py-2.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all rounded-xl hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm"
             >
               <div className="flex items-center space-x-2">
                 <MessageCircle className="h-4 w-4" />
@@ -409,32 +676,45 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       className="space-y-4 max-h-[500px] overflow-y-auto scroll-smooth relative"
                     >
                       {hasMoreAbove && (
-                        <div className="sticky top-0 z-10 bg-gradient-to-b from-white dark:from-gray-900 to-transparent h-8 w-full" />
+                        <div className="sticky top-0 z-10 bg-gradient-to-b from-white dark:from-[#0E072C] to-transparent h-8 w-full" />
                       )}
                       
                       {visibleAnswers.map((answer, index) => (
                         <div 
                           key={answer.id} 
-                          className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 space-y-3 transition-all duration-300 ${
+                          className={`bg-gray-50 dark:bg-[#0E072C] rounded-xl p-4 space-y-3 transition-all duration-300 border border-transparent dark:border-blue-900/30 ${
                             index === visibleAnswers.length - 1 ? 'animate-pulse-once' : ''
                           }`}
                         >
-                          <div className="flex items-center space-x-3">
-                            <img
-                              src={answer.profiles?.avatar_url || '/default-avatar.png'}
-                              alt={answer.profiles?.full_name || 'Usuário'}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {answer.profiles?.full_name || 'Usuário Anônimo'}
-                              </h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {formatDistanceToNow(new Date(answer.created_at), {
-                                  addSuffix: true,
-                                  locale: ptBR,
-                                })}
-                              </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <img
+                                src={answer.profiles?.avatar_url || '/default-avatar.png'}
+                                alt={answer.profiles?.full_name || 'Usuário'}
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                  {answer.profiles?.full_name || 'Usuário Anônimo'}
+                                  {(isAdmin || session?.user?.id === answer.user_id) && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteAnswer(answer.id);
+                                      }}
+                                      className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                                    >
+                                      Excluir resposta
+                                    </button>
+                                  )}
+                                </h4>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatDistanceToNow(new Date(answer.created_at), {
+                                    addSuffix: true,
+                                    locale: ptBR,
+                                  })}
+                                </p>
+                              </div>
                             </div>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -444,7 +724,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       ))}
                       
                       {hasMoreBelow && (
-                        <div className="sticky bottom-0 z-10 bg-gradient-to-t from-white dark:from-gray-900 to-transparent h-8 w-full" />
+                        <div className="sticky bottom-0 z-10 bg-gradient-to-t from-white dark:from-[#0E072C] to-transparent h-8 w-full" />
                       )}
                     </div>
                     
@@ -453,7 +733,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       {hasMoreBelow && (
                         <button
                           onClick={handleLoadMore}
-                          className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all duration-200 rounded-lg hover:bg-blue-50/80 dark:hover:bg-blue-900/20"
+                          className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all duration-200 rounded-lg hover:bg-blue-100/80 dark:hover:bg-blue-900/20"
                         >
                           <span>Visualizar mais</span>
                         </button>
@@ -461,7 +741,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       
                       {/* Contador no meio */}
                       {(hasMoreAbove || hasMoreBelow) && (
-                        <span className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+                        <span className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-[#0E072C] rounded-full">
                           {remainingAnswers}
                         </span>
                       )}
@@ -469,7 +749,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       {hasMoreAbove && (
                         <button
                           onClick={handleShowLess}
-                          className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all duration-200 rounded-lg hover:bg-blue-50/80 dark:hover:bg-blue-900/20"
+                          className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all duration-200 rounded-lg hover:bg-blue-100/80 dark:hover:bg-blue-900/20"
                         >
                           <span>Visualizar menos</span>
                         </button>
@@ -484,17 +764,54 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
                 {/* Formulário de Resposta */}
                 <form onSubmit={handleAnswerSubmit} className="mt-4 space-y-4">
-                  <div className="relative group">
+                  <div className="relative">
                     <textarea
                       value={answer}
-                      onChange={e => setAnswer(e.target.value)}
+                      onChange={(e) => {
+                        if (e.target.value.length <= 150) {
+                          setAnswer(e.target.value);
+                        }
+                      }}
                       placeholder="Digite sua resposta..."
+                      className="w-full bg-white dark:bg-[#0E072C] rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                       rows={3}
-                      className="w-full bg-white dark:bg-gray-800 rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500 group-hover:border-blue-200 dark:group-hover:border-blue-700/50"
+                      maxLength={150}
                     />
-                    <div className="absolute bottom-3 right-3 flex items-center gap-2 text-gray-400">
-                      <span className="text-xs">{answer.length}/1000</span>
+                    <div className="absolute right-12 bottom-3 text-xs text-gray-400">
+                      {answer.length}/150
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowEmojiPicker(!showEmojiPicker);
+                      }}
+                      className="absolute right-3 bottom-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <Smile className="h-5 w-5" />
+                    </button>
+                    {showEmojiPicker && (
+                      <div className="absolute right-0 bottom-14 z-50">
+                        <div className="relative">
+                          <button
+                            onClick={() => setShowEmojiPicker(false)}
+                            className="absolute -top-2 -right-2 bg-white dark:bg-[#0E072C] rounded-full p-1 shadow-lg"
+                          >
+                            <svg
+                              className="h-4 w-4 text-gray-500"
+                              fill="none"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          <EmojiPicker onEmojiClick={onEmojiClick} />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex items-center justify-end">

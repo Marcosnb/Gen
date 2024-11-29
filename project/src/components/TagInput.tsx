@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { X, Check } from 'lucide-react';
 
 // Lista de tags sugeridas com descrições
-const suggestedTags = [
+export const suggestedTags = [
   { 
     id: 'alimentacao', 
     label: 'Alimentação',

@@ -3,18 +3,21 @@ import { Search, PlusCircle, Bell, User, Menu, Moon, Sun, Settings, MessageCircl
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { NotificationModal } from './NotificationModal';
 
 interface UserProfile {
   id: string;
   full_name: string;
   avatar_url: string;
   gender?: string;
+  is_admin: boolean;
 }
 
 export function Header() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [notifications] = useState(3);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const savedTheme = localStorage.getItem('theme');
@@ -25,11 +28,14 @@ export function Header() {
     }
     return false;
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationHoverTimeout, setNotificationHoverTimeout] = useState<NodeJS.Timeout | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [hoverTimeout, setHoverTimeout] = useState<NodeJS.Timeout | null>(null);
+  const { user, loading } = useAuth();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,44 +62,15 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    checkAuth();
-
-    // Inscrever para atualizações de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      if (session?.user) {
-        fetchUserProfile(session.user.id);
-      } else {
-        setUserProfile(null);
-      }
-    });
-
-    // Inscrever para atualizações do perfil
-    const profileSubscription = supabase
-      .channel('profile-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles'
-        },
-        (payload) => {
-          if (payload.new && payload.new.id === userProfile?.id) {
-            setUserProfile(payload.new as UserProfile);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      subscription.unsubscribe();
-      profileSubscription.unsubscribe();
-    };
-  }, []);
+    if (user) {
+      fetchUserProfile(user.id);
+    } else {
+      setUserProfile(null);
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (isAuthenticated && userProfile?.id) {
+    if (user && userProfile?.id) {
       // Buscar contagem inicial de mensagens não lidas
       fetchUnreadCount();
 
@@ -120,21 +97,58 @@ export function Header() {
         channel.unsubscribe();
       };
     }
-  }, [isAuthenticated, userProfile?.id]);
+  }, [user, userProfile?.id]);
 
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setIsAuthenticated(!!session);
-    if (session?.user) {
-      fetchUserProfile(session.user.id);
+  useEffect(() => {
+    if (user) {
+      fetchNotificationUnreadCount();
+      subscribeToNotifications();
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadProfile = async () => {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profile) {
+        setUserProfile(profile);
+      }
+    };
+
+    loadProfile();
+
+    // Inscrever para mudanças no perfil
+    const profileChannel = supabase.channel('profile_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`
+        },
+        (payload) => {
+          setUserProfile(payload.new);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      profileChannel.unsubscribe();
+    };
+  }, [user]);
 
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, gender')
+        .select('id, full_name, avatar_url, gender, is_admin')
         .eq('id', userId)
         .single();
 
@@ -168,6 +182,40 @@ export function Header() {
     setUnreadCount(count || 0);
   };
 
+  const fetchNotificationUnreadCount = async () => {
+    const { count } = await supabase
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user?.id)
+      .eq('read', false);
+    
+    setNotificationUnreadCount(count || 0);
+  };
+
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
+
+  const subscribeToNotifications = () => {
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user?.id}`
+        },
+        () => {
+          fetchNotificationUnreadCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/');
@@ -178,9 +226,23 @@ export function Header() {
     setIsDarkMode(!isDarkMode);
   };
 
-  const handleMouseEnter = () => {
-    if (hoverTimeout) clearTimeout(hoverTimeout);
-    setShowDropdown(true);
+  const handleMouseEnter = async (type: 'notifications' | 'profile') => {
+    if (type === 'notifications') {
+      if (notificationHoverTimeout) clearTimeout(notificationHoverTimeout);
+      setShowNotifications(true);
+      // Marca todas as notificações como lidas
+      if (notificationUnreadCount > 0) {
+        await supabase
+          .from('notifications')
+          .update({ read: true })
+          .eq('user_id', user?.id)
+          .eq('read', false);
+        setNotificationUnreadCount(0);
+      }
+    } else {
+      if (hoverTimeout) clearTimeout(hoverTimeout);
+      setShowDropdown(true);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -192,19 +254,16 @@ export function Header() {
 
   useEffect(() => {
     return () => {
+      if (notificationHoverTimeout) clearTimeout(notificationHoverTimeout);
       if (hoverTimeout) clearTimeout(hoverTimeout);
     };
-  }, [hoverTimeout]);
+  }, [notificationHoverTimeout, hoverTimeout]);
 
   return (
     <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 fixed w-full top-0 z-10 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20 py-4">
           <div className="flex items-center gap-6">
-            <button className="p-2 -ml-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-all lg:hidden focus:outline-none focus:ring-2 focus:ring-primary/30">
-              <Menu className="h-5 w-5" />
-            </button>
-            
             <Link to="/" className="flex items-center gap-2 group">
               <div className="relative w-8 h-8">
                 <div className="absolute inset-0 bg-primary/20 rounded-xl rotate-6 group-hover:rotate-12 transition-transform duration-300" />
@@ -240,7 +299,7 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-4">
-            {isAuthenticated && (
+            {user && (
               <Link 
                 to="/perguntar" 
                 className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 active:scale-95"
@@ -263,15 +322,42 @@ export function Header() {
                 )}
               </Link>
 
-              <button
-                className="relative p-2 rounded-lg hover:bg-muted/80 transition-colors duration-200"
-                onClick={() => {}}
+              <div 
+                className="relative"
+                onMouseEnter={() => handleMouseEnter('notifications')}
+                onMouseLeave={() => {
+                  const timeout = setTimeout(() => {
+                    setShowNotifications(false);
+                  }, 200);
+                  setNotificationHoverTimeout(timeout);
+                }}
+                ref={notificationRef}
               >
-                <Bell className="h-5 w-5" />
-                {notifications > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500" />
-                )}
-              </button>
+                <button
+                  className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  <Bell className="h-5 w-5" />
+                  {notificationUnreadCount > 0 && (
+                    <span className="absolute top-0 right-0 -mt-1 -mr-1 px-1.5 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full">
+                      {notificationUnreadCount}
+                    </span>
+                  )}
+                </button>
+
+                <NotificationModal
+                  show={showNotifications}
+                  onMouseEnter={() => {
+                    if (notificationHoverTimeout) clearTimeout(notificationHoverTimeout);
+                  }}
+                  onMouseLeave={() => {
+                    const timeout = setTimeout(() => {
+                      setShowNotifications(false);
+                    }, 200);
+                    setNotificationHoverTimeout(timeout);
+                  }}
+                  userId={user?.id || ''}
+                />
+              </div>
             </div>
 
             <button 
@@ -286,10 +372,10 @@ export function Header() {
               )}
             </button>
 
-            {isAuthenticated ? (
+            {user ? (
               <div 
                 className="relative"
-                onMouseEnter={handleMouseEnter}
+                onMouseEnter={() => handleMouseEnter('profile')}
                 onMouseLeave={handleMouseLeave}
                 ref={dropdownRef}
               >
@@ -337,9 +423,16 @@ export function Header() {
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate">
-                            {userProfile?.full_name || 'Usuário'}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold truncate">
+                              {userProfile?.full_name || 'Usuário'}
+                            </p>
+                            {userProfile?.is_admin && (
+                              <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-red-500/10 text-red-500 rounded-md">
+                                ADMIN
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-muted-foreground truncate mt-0.5">
                             Minha Conta
                           </p>
@@ -417,6 +510,11 @@ export function Header() {
           </div>
         </div>
       </div>
+      <NotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        userId={user?.id || ''}
+      />
     </header>
   );
 }

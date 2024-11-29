@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Clock, Flame, TrendingUp } from 'lucide-react';
+import { Clock, Flame, TrendingUp, Plus, MessageCircle, Search, ArrowRight, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { QuestionCard } from '../components/QuestionCard';
 import type { Question } from '../types';
@@ -14,6 +14,55 @@ export function Home() {
 
   useEffect(() => {
     fetchQuestions();
+
+    // Inscrever-se para atualizações em tempo real
+    const channel = supabase
+      .channel('public:questions')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'questions'
+        },
+        async (payload) => {
+          console.log('Mudança detectada em questions:', payload);
+          
+          if (payload.eventType === 'DELETE') {
+            // Remover a pergunta do estado local
+            setQuestions(prevQuestions => 
+              prevQuestions.filter(q => q.id !== payload.old.id)
+            );
+          } else {
+            // Para INSERT e UPDATE, recarregar todas as perguntas
+            await fetchQuestions();
+          }
+        }
+      )
+      .subscribe();
+
+    // Inscrever-se para mudanças nas respostas
+    const answersChannel = supabase
+      .channel('public:answers')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'answers'
+        },
+        async () => {
+          // Recarregar perguntas para atualizar contadores de respostas
+          await fetchQuestions();
+        }
+      )
+      .subscribe();
+
+    // Cleanup: desinscrever dos canais quando o componente for desmontado
+    return () => {
+      channel.unsubscribe();
+      answersChannel.unsubscribe();
+    };
   }, [selectedFilter]);
 
   const fetchQuestions = async () => {
@@ -112,6 +161,29 @@ export function Home() {
       setError('Erro ao carregar perguntas. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Função para deletar uma resposta
+  const handleDeleteResponse = async (responseId: number) => {
+    try {
+      const { error } = await supabase
+        .from('responses')
+        .delete()
+        .eq('id', responseId)
+        .eq('user_id', session?.user?.id); // Garante que apenas o próprio usuário pode deletar
+
+      if (error) {
+        console.error('Erro ao deletar resposta:', error);
+        return;
+      }
+
+      // Atualiza a lista de respostas localmente
+      setResponses(prevResponses => 
+        prevResponses.filter(response => response.id !== responseId)
+      );
+    } catch (error) {
+      console.error('Erro ao deletar resposta:', error);
     }
   };
 

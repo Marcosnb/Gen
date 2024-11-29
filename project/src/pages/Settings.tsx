@@ -77,6 +77,24 @@ export function Settings() {
     setSuccess(false);
 
     try {
+      // Verificar se o novo nome já existe (exceto para o usuário atual)
+      if (fullName !== profile?.full_name) {
+        const { data: existingUser, error: checkError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('full_name', fullName)
+          .neq('id', user?.id)
+          .single();
+
+        if (existingUser) {
+          throw new Error('Já existe um usuário com este nome. Por favor, escolha outro nome.');
+        }
+
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError;
+        }
+      }
+
       // Update email if changed
       if (email !== user?.email) {
         const { error: emailError } = await supabase.auth.updateUser({
@@ -181,15 +199,25 @@ export function Settings() {
             
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="fullName" className="text-sm font-medium">
-                  Nome Completo
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="fullName" className="text-sm font-medium">
+                    Nome Completo
+                  </label>
+                  {error?.includes('Já existe um usuário com este nome') && (
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-md">
+                      Já existe um usuário com este nome
+                    </span>
+                  )}
+                </div>
                 <input
                   id="fullName"
                   type="text"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="input w-full"
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    setError(null);
+                  }}
+                  className={`input w-full ${error?.includes('Já existe um usuário com este nome') ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                   placeholder="Seu nome completo"
                   required
                 />
@@ -239,7 +267,7 @@ export function Settings() {
           </div>
 
           {/* Mensagens de Feedback */}
-          {error && (
+          {error && !error.includes('Já existe um usuário com este nome') && (
             <div className="flex items-center gap-2 p-4 bg-destructive/10 text-destructive rounded-lg">
               <AlertCircle className="h-5 w-5" />
               <p>{error}</p>

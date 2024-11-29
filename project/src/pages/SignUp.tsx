@@ -39,6 +39,21 @@ export function SignUp() {
     setLoading(true);
 
     try {
+      // Verificar se já existe um usuário com o mesmo nome
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('full_name', formData.name)
+        .single();
+
+      if (existingUser) {
+        throw new Error('Já existe um usuário com este nome. Por favor, escolha outro nome.');
+      }
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
       // 1. Criar conta no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
@@ -57,7 +72,7 @@ export function SignUp() {
               full_name: formData.name,
               gender: formData.gender,
               avatar_url: avatar,
-              points: 1000,
+              points: 0,
               is_admin: false,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
@@ -124,15 +139,29 @@ export function SignUp() {
 
               {/* Nome */}
               <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-medium text-muted-foreground">
-                  Nome completo
-                </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="name" className="text-sm font-medium text-muted-foreground">
+                    Nome completo
+                  </label>
+                  {error?.includes('Já existe um usuário com este nome') && (
+                    <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-md">
+                      Já existe um usuário com este nome
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2.5 rounded-lg bg-background/50 border border-border/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    setError(null);
+                  }}
+                  className={`w-full px-3 py-2.5 rounded-lg bg-background/50 border focus:ring-2 transition-all outline-none ${
+                    error?.includes('Já existe um usuário com este nome')
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20'
+                      : 'border-border/50 focus:border-primary/50 focus:ring-primary/20'
+                  }`}
                   placeholder="Seu nome completo"
                   required
                 />
@@ -227,7 +256,7 @@ export function SignUp() {
               </div>
 
               {/* Mostrar erro se houver */}
-              {error && (
+              {error && !error.includes('Já existe um usuário com este nome') && (
                 <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                   {error}
                 </div>
