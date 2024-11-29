@@ -1,12 +1,12 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
-import EmojiPicker, { EmojiClickData } from 'emoji-picker-react';
+import InputEmoji from 'react-input-emoji';
 
 interface Answer {
   id: string;
@@ -37,7 +37,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [startIndex, setStartIndex] = useState(0);
   const answersContainerRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<any>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   const VISIBLE_ANSWERS = 2;
@@ -153,7 +152,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   useEffect(() => {
     fetchAnswers();
 
-    // Inscrever-se para atualizações em tempo real
     const channel = supabase
       .channel(`answers_${question.id}`)
       .on(
@@ -167,11 +165,9 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         async (payload) => {
           console.log('Mudança detectada:', payload);
           if (payload.eventType === 'DELETE') {
-            // Atualizar localmente para remoção
             setAnswers(current => current.filter(a => a.id !== payload.old.id));
             setAnswerCount(prev => prev - 1);
           } else {
-            // Recarregar todas as respostas para outros tipos de mudança
             await fetchAnswers();
           }
         }
@@ -179,22 +175,20 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
   }, [question.id]);
 
   useEffect(() => {
-    // Carregar a sessão do usuário
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });
 
-    // Inscrever-se para mudanças na sessão
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -485,11 +479,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     return tagMap[tagToUse] || Tag;
   };
 
-  const onEmojiClick = (emojiData: EmojiClickData) => {
-    setAnswer(prev => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
   return (
     <div
       onClick={onClick}
@@ -765,53 +754,19 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                 {/* Formulário de Resposta */}
                 <form onSubmit={handleAnswerSubmit} className="mt-4 space-y-4">
                   <div className="relative">
-                    <textarea
+                    <InputEmoji
                       value={answer}
-                      onChange={(e) => {
-                        if (e.target.value.length <= 150) {
-                          setAnswer(e.target.value);
-                        }
-                      }}
+                      onChange={setAnswer}
+                      cleanOnEnter
                       placeholder="Digite sua resposta..."
-                      className="w-full bg-white dark:bg-[#0E072C] rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                      rows={3}
                       maxLength={150}
+                      borderColor="rgb(229 231 235)"
+                      theme="light"
+                      className="w-full bg-white dark:bg-[#0E072C] rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     />
-                    <div className="absolute right-12 bottom-3 text-xs text-gray-400">
+                    <div className="absolute right-3 bottom-3 text-xs text-gray-400">
                       {answer.length}/150
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setShowEmojiPicker(!showEmojiPicker);
-                      }}
-                      className="absolute right-3 bottom-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                    >
-                      <Smile className="h-5 w-5" />
-                    </button>
-                    {showEmojiPicker && (
-                      <div className="absolute right-0 bottom-14 z-50">
-                        <div className="relative">
-                          <button
-                            onClick={() => setShowEmojiPicker(false)}
-                            className="absolute -top-2 -right-2 bg-white dark:bg-[#0E072C] rounded-full p-1 shadow-lg"
-                          >
-                            <svg
-                              className="h-4 w-4 text-gray-500"
-                              fill="none"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                          <EmojiPicker onEmojiClick={onEmojiClick} />
-                        </div>
-                      </div>
-                    )}
                   </div>
                   
                   <div className="flex items-center justify-end">
