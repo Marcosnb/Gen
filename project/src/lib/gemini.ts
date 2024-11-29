@@ -39,19 +39,22 @@ Regras para o novo título:
 
 Retorne APENAS o título melhorado, sem explicações adicionais.`,
 
-  content: (currentContent: string) => `Você é um assistente especializado em melhorar a descrição de perguntas técnicas.
+  content: (currentContent: string) => `Você é um assistente especializado em melhorar descrições de perguntas.
 
-Melhore o seguinte conteúdo da pergunta: "${currentContent}"
+Melhore o seguinte conteúdo: "${currentContent}"
 
-Regras para o novo conteúdo:
-1. Mantenha o mesmo tema e contexto do conteúdo original
-2. Torne a descrição mais clara e específica
-3. Organize o texto em parágrafos lógicos
-4. Mantenha em português
-5. Adicione mais detalhes técnicos relevantes
-6. Seja direto e objetivo
-7. Use formatação markdown quando apropriado (ex: código, listas)
-8. Mantenha um tom profissional e técnico
+Regras:
+1. Use aproximadamente 300 caracteres (é importante usar a maior parte deste limite)
+2. Termine a pergunta com ponto de interrogação (?)
+3. Remova quaisquer comentários entre asteriscos (** **)
+4. Mantenha o mesmo tema e contexto
+5. Seja detalhado mas objetivo
+6. Mantenha em português
+7. Inclua informações relevantes como:
+   - Contexto do problema
+   - Detalhes específicos
+   - O que já foi tentado (se mencionado)
+   - Resultado esperado
 
 Retorne APENAS o conteúdo melhorado, sem explicações adicionais.`,
 };

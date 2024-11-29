@@ -1,12 +1,12 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
-import InputEmoji from 'react-input-emoji';
+import EmojiPicker from 'emoji-picker-react';
 
 interface Answer {
   id: string;
@@ -38,6 +38,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const answersContainerRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -629,7 +630,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
           </div>
 
           {/* Answer Section with Smooth Transitions */}
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-blue-900/30">
             <button
               onClick={handleAccordionClick}
               className="flex items-center justify-between w-full px-4 py-2.5 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-all rounded-xl hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm"
@@ -752,32 +753,48 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                 )}
 
                 {/* Formulário de Resposta */}
-                <form onSubmit={handleAnswerSubmit} className="mt-4 space-y-4">
-                  <div className="relative">
-                    <InputEmoji
-                      value={answer}
-                      onChange={setAnswer}
-                      cleanOnEnter
-                      placeholder="Digite sua resposta..."
-                      maxLength={150}
-                      borderColor="rgb(229 231 235)"
-                      theme="light"
-                      className="w-full bg-white dark:bg-[#0E072C] rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                    />
-                    <div className="absolute right-3 bottom-3 text-xs text-gray-400">
-                      {answer.length}/150
+                <form onSubmit={handleAnswerSubmit} className="mt-4">
+                  <div className="relative bg-white dark:bg-[#130B2B] rounded-xl p-3 border border-gray-200 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-all duration-300">
+                    <div className="relative">
+                      <textarea
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                        placeholder="Digite sua resposta..."
+                        maxLength={150}
+                        className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-sm focus:outline-none resize-none min-h-[80px] pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                        className="absolute right-2 top-2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-blue-900/20 transition-colors"
+                      >
+                        <Smile className="h-5 w-5" />
+                      </button>
+                      {showEmojiPicker && (
+                        <div className="absolute right-0 bottom-full mb-2 z-50">
+                          <EmojiPicker
+                            onEmojiClick={(emojiData) => {
+                              setAnswer(prev => prev + emojiData.emoji);
+                              setShowEmojiPicker(false);
+                            }}
+                            theme="dark"
+                          />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-end">
-                    <button
-                      type="submit"
-                      disabled={!answer.trim()}
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 active:scale-95"
-                    >
-                      <Send className="h-4 w-4" />
-                      Enviar resposta
-                    </button>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-blue-900/30">
+                      <div className="text-xs text-gray-400 dark:text-gray-500">
+                        {answer.length}/150 caracteres
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={!answer.trim()}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        <Send className="h-4 w-4" />
+                        Enviar
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
