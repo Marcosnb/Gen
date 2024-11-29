@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
+import InputEmoji from 'react-input-emoji';
 
 interface Answer {
   id: string;
@@ -753,17 +754,15 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                 {/* Formulário de Resposta */}
                 <form onSubmit={handleAnswerSubmit} className="mt-4 space-y-4">
                   <div className="relative">
-                    <textarea
+                    <InputEmoji
                       value={answer}
-                      onChange={(e) => {
-                        if (e.target.value.length <= 150) {
-                          setAnswer(e.target.value);
-                        }
-                      }}
+                      onChange={setAnswer}
+                      cleanOnEnter
                       placeholder="Digite sua resposta..."
-                      className="w-full bg-white dark:bg-[#0E072C] rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
-                      rows={3}
                       maxLength={150}
+                      borderColor="rgb(229 231 235)"
+                      theme="light"
+                      className="w-full bg-white dark:bg-[#0E072C] rounded-xl px-4 py-3 text-sm border border-gray-200 dark:border-blue-900/30 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 resize-none transition-all duration-300 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     />
                     <div className="absolute right-3 bottom-3 text-xs text-gray-400">
                       {answer.length}/150
