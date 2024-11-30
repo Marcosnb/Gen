@@ -41,27 +41,9 @@ export function Home() {
       )
       .subscribe();
 
-    // Inscrever-se para mudanças nas respostas
-    const answersChannel = supabase
-      .channel('public:answers')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'answers'
-        },
-        async () => {
-          // Recarregar perguntas para atualizar contadores de respostas
-          await fetchQuestions();
-        }
-      )
-      .subscribe();
-
     // Cleanup: desinscrever dos canais quando o componente for desmontado
     return () => {
       channel.unsubscribe();
-      answersChannel.unsubscribe();
     };
   }, [selectedFilter]);
 
@@ -70,10 +52,14 @@ export function Home() {
       setLoading(true);
       setError(null);
 
-      // Primeiro, buscar as perguntas
+      // Primeiro, buscar as perguntas com contadores
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
-        .select('*');
+        .select(`
+          *,
+          likes_count:question_likes(count),
+          answers_count:answers(count)
+        `);
 
       if (questionsError) {
         console.error('Erro Supabase:', questionsError);
@@ -124,9 +110,9 @@ export function Home() {
             created_at: question.created_at,
             tags: Array.isArray(question.tags) ? question.tags : [],
             views: question.views || 0,
-            upvotes: question.upvotes || 0,
+            upvotes: question.likes_count?.[0]?.count || 0,
             is_answered: question.is_answered || false,
-            answer_count: question.answer_count || 0,
+            answer_count: question.answers_count?.[0]?.count || 0,
             profiles: profile || {
               id: question.user_id,
               full_name: 'Usuário Anônimo',
@@ -148,7 +134,7 @@ export function Home() {
             filteredQuestions.sort((a, b) => b.upvotes - a.upvotes);
             break;
           case 'trending':
-            filteredQuestions.sort((a, b) => b.views - a.views);
+            filteredQuestions.sort((a, b) => b.answer_count - a.answer_count);
             break;
         }
 
@@ -202,7 +188,7 @@ export function Home() {
                   Últimas Perguntas
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-2xl">
-                  Explore perguntas da comunidade ou compartilhe suas dúvidas para receber ajuda de outras pessoas
+                  Explore perguntas da comunidade ou compartilhe suas dúvidas para ganhar moedas e ajuda de outras pessoas
                 </p>
               </div>
 

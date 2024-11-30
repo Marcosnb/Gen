@@ -7,6 +7,7 @@ import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
 import { FormattedText } from './FormattedText';
+import { InsufficientCoinsAlert } from './InsufficientCoinsAlert';
 
 interface Answer {
   id: string;
@@ -28,8 +29,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const navigate = useNavigate();
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [answer, setAnswer] = useState('');
-  const [isUpvoted, setIsUpvoted] = useState(false);
-  const [upvotes, setUpvotes] = useState(question.upvotes);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [answerCount, setAnswerCount] = useState(question.answer_count);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,6 +37,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const answersContainerRef = useRef<HTMLDivElement>(null);
   const [session, setSession] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [showInsufficientCoinsAlert, setShowInsufficientCoinsAlert] = useState(false);
+  const [requiredCoins, setRequiredCoins] = useState(0);
+  const [userCoins, setUserCoins] = useState(0);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -208,6 +212,37 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     checkAdminStatus();
   }, []);
 
+  useEffect(() => {
+    const checkLikeStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.id) {
+          // Verificar se o usuário já curtiu
+          const { data: likeData } = await supabase
+            .from('question_likes')
+            .select('*')
+            .eq('question_id', question.id)
+            .eq('user_id', session.user.id)
+            .single();
+          
+          setIsLiked(!!likeData);
+        }
+
+        // Buscar contagem total de curtidas
+        const { count } = await supabase
+          .from('question_likes')
+          .select('*', { count: 'exact' })
+          .eq('question_id', question.id);
+        
+        setLikeCount(count || 0);
+      } catch (error) {
+        console.error('Erro ao verificar curtidas:', error);
+      }
+    };
+
+    checkLikeStatus();
+  }, [question.id]);
+
   const handleAccordionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsAccordionOpen(!isAccordionOpen);
@@ -254,27 +289,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
-      // Atualizar pontos do usuário apenas se não for o autor da pergunta
-      if (session.user.id !== question.user_id) {
-        const { data: userData, error: userError } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .single();
-
-        if (!userError && userData) {
-          const newPoints = (userData.points || 0) + 20;
-          const { error: pointsError } = await supabase
-            .from('profiles')
-            .update({ points: newPoints })
-            .eq('id', session.user.id);
-
-          if (pointsError) {
-            console.error('Erro ao atualizar pontos:', pointsError);
-          }
-        }
-      }
-
       // Limpar o campo de resposta
       setAnswer('');
       
@@ -284,19 +298,85 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     }
   };
 
-  const handleUpvote = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleLike = async () => {
     try {
-      const { error } = await supabase.rpc('toggle_question_upvote', {
-        p_question_id: question.id,
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        navigate('/login');
+        return;
+      }
 
-      if (error) throw error;
+      // Otimistic update
+      const newIsLiked = !isLiked;
+      const likeDelta = newIsLiked ? 1 : -1;
+      setIsLiked(newIsLiked);
+      setLikeCount(prev => prev + likeDelta);
 
-      setIsUpvoted(!isUpvoted);
-      setUpvotes(prev => isUpvoted ? prev - 1 : prev + 1);
+      if (!isLiked) {
+        // Adicionar curtida
+        const { error: addError } = await supabase
+          .from('question_likes')
+          .insert([
+            {
+              question_id: question.id,
+              user_id: session.user.id
+            }
+          ]);
+
+        if (addError) {
+          // Reverter em caso de erro
+          setIsLiked(false);
+          setLikeCount(prev => prev - 1);
+          throw new Error(`Erro ao adicionar curtida: ${addError.message}`);
+        }
+
+        // Adicionar pontos ao autor da pergunta
+        const { error: pointsError } = await supabase
+          .rpc('update_user_points', {
+            user_id_param: question.user_id,
+            points_to_add: 10
+          });
+
+        if (pointsError) {
+          // Reverter em caso de erro
+          setIsLiked(false);
+          setLikeCount(prev => prev - 1);
+          throw new Error(`Erro ao atualizar pontos: ${pointsError.message}`);
+        }
+
+      } else {
+        // Remover curtida
+        const { error: removeError } = await supabase
+          .from('question_likes')
+          .delete()
+          .eq('question_id', question.id)
+          .eq('user_id', session.user.id);
+
+        if (removeError) {
+          // Reverter em caso de erro
+          setIsLiked(true);
+          setLikeCount(prev => prev + 1);
+          throw new Error(`Erro ao remover curtida: ${removeError.message}`);
+        }
+
+        // Remover pontos do autor da pergunta
+        const { error: pointsError } = await supabase
+          .rpc('update_user_points', {
+            user_id_param: question.user_id,
+            points_to_add: -10
+          });
+
+        if (pointsError) {
+          // Reverter em caso de erro
+          setIsLiked(true);
+          setLikeCount(prev => prev + 1);
+          throw new Error(`Erro ao atualizar pontos: ${pointsError.message}`);
+        }
+      }
+
     } catch (error) {
-      console.error('Error toggling upvote:', error);
+      console.error('Erro ao processar curtida:', error);
+      alert('Erro ao processar curtida');
     }
   };
 
@@ -305,10 +385,10 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
 
-      // Verificar se é admin
+      // Verificar se é admin e pontos
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('is_admin, points')
         .eq('id', session.user.id)
         .single();
 
@@ -321,6 +401,28 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
+      // Verificar se tem moedas suficientes (9 moedas)
+      if (!profile?.is_admin && profile.points < 9) {
+        setRequiredCoins(9);
+        setUserCoins(profile.points);
+        setShowInsufficientCoinsAlert(true);
+        return;
+      }
+
+      // Descontar moedas se não for admin
+      if (!profile?.is_admin) {
+        const { error: pointsError } = await supabase
+          .from('profiles')
+          .update({ points: profile.points - 9 })
+          .eq('id', session.user.id);
+
+        if (pointsError) {
+          console.error('Erro ao descontar moedas:', pointsError);
+          alert('Erro ao descontar moedas');
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('answers')
         .delete()
@@ -328,7 +430,17 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
       if (error) throw error;
 
-      // Atualização local será feita pelo listener em tempo real
+      // Atualiza o estado local imediatamente após excluir com sucesso
+      setAnswers(prevAnswers => {
+        const newAnswers = prevAnswers.filter(a => a.id !== answerId);
+        setAnswerCount(newAnswers.length); // Atualiza o contador baseado no novo array de respostas
+        return newAnswers;
+      });
+      
+      // Ajusta a paginação se necessário
+      if (startIndex > 0 && answers.length <= VISIBLE_ANSWERS) {
+        setStartIndex(0);
+      }
     } catch (error) {
       console.error('Erro ao deletar resposta:', error);
       alert('Erro ao deletar resposta');
@@ -340,10 +452,10 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
 
-      // Verificar se é admin
+      // Verificar se é admin e pontos
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('is_admin, points')
         .eq('id', session.user.id)
         .single();
 
@@ -353,10 +465,32 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', question.id);
+      // Verificar se tem moedas suficientes (5 moedas)
+      if (!profile?.is_admin && profile.points < 5) {
+        setRequiredCoins(5);
+        setUserCoins(profile.points);
+        setShowInsufficientCoinsAlert(true);
+        return;
+      }
+
+      // Descontar moedas se não for admin
+      if (!profile?.is_admin) {
+        const { error: pointsError } = await supabase
+          .from('profiles')
+          .update({ points: profile.points - 5 })
+          .eq('id', session.user.id);
+
+        if (pointsError) {
+          console.error('Erro ao descontar moedas:', pointsError);
+          alert('Erro ao descontar moedas');
+          return;
+        }
+      }
+
+      // Chamar a função segura de deleção
+      const { error } = await supabase.rpc('delete_question_safely', {
+        question_id_param: question.id
+      });
 
       if (error) throw error;
       
@@ -484,35 +618,36 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       onClick={onClick}
       className="relative bg-white dark:bg-[#0E072C] rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-blue-900/50 transition-all duration-300 overflow-hidden"
     >
+      {/* Alerta de moedas insuficientes */}
+      {showInsufficientCoinsAlert && (
+        <InsufficientCoinsAlert
+          requiredCoins={requiredCoins}
+          currentCoins={userCoins}
+          onClose={() => setShowInsufficientCoinsAlert(false)}
+        />
+      )}
+
       {/* Subtle Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-transparent to-blue-50/30 dark:from-blue-900/10 dark:to-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       
       <div className="relative grid grid-cols-[auto_1fr] gap-6 p-6">
         {/* Voting and Interaction Column */}
         <div className="flex flex-col items-center gap-4">
-          {/* Upvote Button with Advanced Interaction */}
+          {/* Like Button */}
           <div className="flex flex-col items-center">
             <button
-              onClick={handleUpvote}
+              onClick={handleLike}
+              disabled={session?.user?.id === question.user_id}
               className={`p-2.5 rounded-xl transition-all duration-300 transform hover:scale-105 ${
-                isUpvoted 
+                isLiked 
                   ? 'text-red-600 dark:text-red-400 bg-red-100/80 dark:bg-red-900/30 shadow-inner backdrop-blur-sm' 
-                  : 'text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-100/80 dark:hover:bg-red-900/30'
-              }`}
+                  : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+              } ${session?.user?.id === question.user_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title={session?.user?.id === question.user_id ? 'Você não pode curtir sua própria pergunta' : ''}
             >
-              <Flame 
-                className={`h-5 w-5 transition-transform duration-300 ${
-                  isUpvoted 
-                    ? 'scale-110 animate-pulse' 
-                    : 'hover:scale-110'
-                }`} 
-              />
+              <Flame className="w-5 h-5" />
             </button>
-            <span className={`text-sm font-semibold mt-1.5 transition-all duration-300 ${
-              isUpvoted ? 'text-red-600 dark:text-red-400 scale-110' : 'text-gray-600 dark:text-gray-300'
-            }`}>
-              {upvotes}
-            </span>
+            <span className="text-xs text-muted-foreground mt-1">{likeCount}</span>
           </div>
 
           {/* Stats Icons with Tooltips */}

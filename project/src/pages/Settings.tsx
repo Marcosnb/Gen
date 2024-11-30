@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { Settings as SettingsIcon, Loader2, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { InsufficientCoinsAlert } from '../components/InsufficientCoinsAlert';
 
 interface Profile {
   id: string;
@@ -19,6 +20,8 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState<string>('');
+  const [showInsufficientCoinsAlert, setShowInsufficientCoinsAlert] = useState(false);
+  const [userCoins, setUserCoins] = useState(0);
 
   // Form state
   const [fullName, setFullName] = useState('');
@@ -77,6 +80,19 @@ export function Settings() {
     setSuccess(false);
 
     try {
+      // Verificar moedas do usuário
+      const { data: currentProfile } = await supabase
+        .from('profiles')
+        .select('points, is_admin')
+        .eq('id', user?.id)
+        .single();
+
+      if (!currentProfile?.is_admin && currentProfile.points < 4) {
+        setUserCoins(currentProfile.points);
+        setShowInsufficientCoinsAlert(true);
+        return;
+      }
+
       // Verificar se o novo nome já existe (exceto para o usuário atual)
       if (fullName !== profile?.full_name) {
         const { data: existingUser, error: checkError } = await supabase
@@ -101,6 +117,18 @@ export function Settings() {
           email: email,
         });
         if (emailError) throw emailError;
+      }
+
+      // Descontar moedas se não for admin
+      if (!currentProfile?.is_admin) {
+        const { error: pointsError } = await supabase
+          .from('profiles')
+          .update({ points: currentProfile.points - 4 })
+          .eq('id', user?.id);
+
+        if (pointsError) {
+          throw new Error('Erro ao descontar moedas');
+        }
       }
 
       // Update profile using the current avatar URL
@@ -136,180 +164,191 @@ export function Settings() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 mt-16">
-      <div className="bg-card border border-border rounded-lg shadow-sm">
-        <div className="p-6 border-b border-border">
-          <div className="flex items-center gap-3">
-            <SettingsIcon className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold">Configurações do Perfil</h1>
-          </div>
-          <p className="mt-2 text-muted-foreground">
-            Gerencie suas informações pessoais e preferências de conta
-          </p>
-        </div>
+    <>
+      {/* Alerta de moedas insuficientes */}
+      {showInsufficientCoinsAlert && (
+        <InsufficientCoinsAlert
+          requiredCoins={4}
+          currentCoins={userCoins}
+          onClose={() => setShowInsufficientCoinsAlert(false)}
+        />
+      )}
 
-        <form onSubmit={handleUpdateProfile} className="p-6 space-y-8">
-          {/* Aviso sobre senha */}
-          <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              className="h-5 w-5 flex-shrink-0"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+      <div className="max-w-3xl mx-auto px-4 py-8 mt-16">
+        <div className="bg-card border border-border rounded-lg shadow-sm">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center gap-3">
+              <SettingsIcon className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold">Configurações do Perfil</h1>
+            </div>
+            <p className="mt-2 text-muted-foreground">
+              Gerencie suas informações pessoais e preferências de conta
+            </p>
+          </div>
+
+          <form onSubmit={handleUpdateProfile} className="p-6 space-y-8">
+            {/* Aviso sobre senha */}
+            <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-5 w-5 flex-shrink-0"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <span>
+                Por motivos de segurança e normas da plataforma, não é possível alterar a senha através desta interface.
+              </span>
+            </div>
+
+            {/* Seção do Avatar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 bg-muted/40 rounded-lg">
+              <img
+                src={currentAvatar}
+                alt="Avatar"
+                className="h-24 w-24 rounded-full ring-2 ring-primary/20"
               />
-            </svg>
-            <span>
-              Por motivos de segurança e normas da plataforma, não é possível alterar a senha através desta interface.
-            </span>
-          </div>
+              <div className="space-y-2">
+                <h3 className="font-medium">Foto do Perfil</h3>
+                <p className="text-sm text-muted-foreground">
+                  Esta foto será exibida em seu perfil e em suas perguntas
+                </p>
+                <button
+                  type="button"
+                  onClick={handleGenerateNewAvatar}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Gerar Novo Avatar
+                </button>
+              </div>
+            </div>
 
-          {/* Seção do Avatar */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 bg-muted/40 rounded-lg">
-            <img
-              src={currentAvatar}
-              alt="Avatar"
-              className="h-24 w-24 rounded-full ring-2 ring-primary/20"
-            />
-            <div className="space-y-2">
-              <h3 className="font-medium">Foto do Perfil</h3>
-              <p className="text-sm text-muted-foreground">
-                Esta foto será exibida em seu perfil e em suas perguntas
-              </p>
+            {/* Seção de Informações Pessoais */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-medium leading-6">Informações Pessoais</h3>
+              
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="fullName" className="text-sm font-medium">
+                      Nome
+                    </label>
+                    {error?.includes('Já existe um usuário com este nome') && (
+                      <div className="flex items-center gap-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                        <p className="text-xs text-red-500">
+                          Já existe um usuário com este nome
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => {
+                      const fullName = e.target.value;
+                      setFullName(fullName);
+                      setError(null);
+                    }}
+                    maxLength={10}
+                    className={`input w-full ${error?.includes('Já existe um usuário com este nome') ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
+                    placeholder="Seu nome"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Este é o nome que será exibido para outros usuários
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="email" className="text-sm font-medium">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input w-full"
+                    placeholder="seu@email.com"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Usado para login e notificações
+                  </p>
+                </div>
+
+                <div className="space-y-2 sm:col-span-2">
+                  <label htmlFor="gender" className="text-sm font-medium">
+                    Gênero
+                  </label>
+                  <select
+                    id="gender"
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  >
+                    <option value="">Prefiro não informar</option>
+                    <option value="male">Masculino</option>
+                    <option value="female">Feminino</option>
+                    <option value="other">Outro</option>
+                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Esta informação é opcional
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Mensagens de Feedback */}
+            {error && !error.includes('Já existe um usuário com este nome') && (
+              <div className="flex items-center gap-2 p-4 bg-destructive/10 text-destructive rounded-lg">
+                <AlertCircle className="h-5 w-5" />
+                <p>{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="flex items-center gap-2 p-4 bg-green-500/10 text-green-500 rounded-lg">
+                <CheckCircle2 className="h-5 w-5" />
+                <p>Perfil atualizado com sucesso!</p>
+              </div>
+            )}
+
+            {/* Botões de Ação */}
+            <div className="mt-6 flex items-center justify-end gap-4">
               <button
                 type="button"
-                onClick={handleGenerateNewAvatar}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+                onClick={() => navigate('/')}
+                className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
               >
-                <RefreshCw className="h-4 w-4" />
-                Gerar Novo Avatar
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-sm"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
+                Salvar alterações
               </button>
             </div>
-          </div>
-
-          {/* Seção de Informações Pessoais */}
-          <div className="space-y-6">
-            <h3 className="text-lg font-medium leading-6">Informações Pessoais</h3>
-            
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label htmlFor="fullName" className="text-sm font-medium">
-                    Nome
-                  </label>
-                  {error?.includes('Já existe um usuário com este nome') && (
-                    <div className="flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                      <p className="text-xs text-red-500">
-                        Já existe um usuário com este nome
-                      </p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  id="fullName"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => {
-                    const fullName = e.target.value;
-                    setFullName(fullName);
-                    setError(null);
-                  }}
-                  maxLength={10}
-                  className={`input w-full ${error?.includes('Já existe um usuário com este nome') ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
-                  placeholder="Seu nome"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Este é o nome que será exibido para outros usuários
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input w-full"
-                  placeholder="seu@email.com"
-                  required
-                />
-                <p className="text-xs text-muted-foreground">
-                  Usado para login e notificações
-                </p>
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <label htmlFor="gender" className="text-sm font-medium">
-                  Gênero
-                </label>
-                <select
-                  id="gender"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                >
-                  <option value="">Prefiro não informar</option>
-                  <option value="male">Masculino</option>
-                  <option value="female">Feminino</option>
-                  <option value="other">Outro</option>
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Esta informação é opcional
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Mensagens de Feedback */}
-          {error && !error.includes('Já existe um usuário com este nome') && (
-            <div className="flex items-center gap-2 p-4 bg-destructive/10 text-destructive rounded-lg">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error}</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="flex items-center gap-2 p-4 bg-green-500/10 text-green-500 rounded-lg">
-              <CheckCircle2 className="h-5 w-5" />
-              <p>Perfil atualizado com sucesso!</p>
-            </div>
-          )}
-
-          {/* Botões de Ação */}
-          <div className="mt-6 flex items-center justify-end gap-4">
-            <button
-              type="button"
-              onClick={() => navigate('/')}
-              className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-sm"
-            >
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="h-4 w-4" />
-              )}
-              Salvar alterações
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

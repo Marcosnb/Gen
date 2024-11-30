@@ -41,12 +41,24 @@ export function Profile() {
         .select('id', { count: 'exact' })
         .eq('user_id', session.user.id);
 
+      // Buscar curtidas dadas pelo usuário
+      const { count: likesGiven } = await supabase
+        .from('question_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', session.user.id);
+
+      // Buscar curtidas recebidas nas perguntas do usuário
+      const { count: likesReceived } = await supabase
+        .from('question_likes')
+        .select('*', { count: 'exact', head: true })
+        .in('question_id', questionsCount?.map(q => q.id) || []);
+
       if (!answersError && !questionsError) {
         setStats({
           questions_count: questionsCount?.length || 0,
           answers_count: answersCount?.length || 0,
-          likes_given_count: 0,
-          likes_received_count: 0
+          likes_given_count: likesGiven || 0,
+          likes_received_count: likesReceived || 0
         });
       }
 
@@ -93,8 +105,8 @@ export function Profile() {
                 Membro desde {new Date(user?.created_at || '').toLocaleDateString()}
                 <br />
                 <span className="flex items-center gap-1">
-                  <Coins className="w-4 h-4" />
-                  Você tem {points} pontos
+                  <Coins className="w-4 h-4 text-yellow-500" />
+                  Você tem {points} moedas
                 </span>
               </p>
             </div>

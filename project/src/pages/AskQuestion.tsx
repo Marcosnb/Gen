@@ -80,30 +80,7 @@ export function AskQuestion() {
 
       if (insertError) throw insertError;
 
-      // Atualizar os pontos do usuário se não for anônimo
-      if (!isAnonymous) {
-        // Primeiro, buscar os pontos atuais
-        const { data: currentPoints } = await supabase
-          .from('profiles')
-          .select('points')
-          .eq('id', session.user.id)
-          .single();
-
-        // Calcular novos pontos
-        const newPoints = (currentPoints?.points || 0) + 7;
-
-        // Atualizar os pontos
-        const { error: pointsError } = await supabase
-          .from('profiles')
-          .update({ points: newPoints })
-          .eq('id', session.user.id);
-
-        if (pointsError) {
-          console.error('Erro ao atualizar pontos:', pointsError);
-        }
-      }
-
-      setSuccess(isAnonymous ? 'Pergunta publicada com sucesso!' : 'Pergunta publicada com sucesso! Você ganhou 7 pontos!');
+      setSuccess('Pergunta publicada com sucesso!');
       resetForm();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao publicar pergunta');
@@ -269,7 +246,7 @@ export function AskQuestion() {
                           />
                         </svg>
                         <span className="relative top-px">
-                          Não será possivel apagar ou ganhar pontos
+                          Não será possivel apagar ou ganhar moedas
                         </span>
                       </span>
                     )}

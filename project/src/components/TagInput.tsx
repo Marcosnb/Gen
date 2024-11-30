@@ -201,7 +201,7 @@ export const suggestedTags = [
   {
     id: 'danca',
     label: 'Dança',
-    description: 'Estilos de dança e expressão corporal'
+    description: 'Expressão corporal e ritmos'
   },
   {
     id: 'teatro',
@@ -211,7 +211,7 @@ export const suggestedTags = [
   {
     id: 'astronomia',
     label: 'Astronomia',
-    description: 'Estudo do universo e corpos celestes'
+    description: 'Estudo dos astros e do universo'
   },
   {
     id: 'matematica',
@@ -221,17 +221,17 @@ export const suggestedTags = [
   {
     id: 'fisica',
     label: 'Física',
-    description: 'Estudo da matéria, energia e leis naturais'
+    description: 'Estudo das leis naturais e fenômenos'
   },
   {
     id: 'quimica',
     label: 'Química',
-    description: 'Estudo das substâncias e suas transformações'
+    description: 'Estudo da matéria e suas transformações'
   },
   {
     id: 'biologia',
     label: 'Biologia',
-    description: 'Estudo dos seres vivos e da vida'
+    description: 'Estudo dos seres vivos'
   },
   {
     id: 'medicina',
@@ -271,7 +271,7 @@ export const suggestedTags = [
   {
     id: 'artesanato',
     label: 'Artesanato',
-    description: 'Trabalhos manuais e criações artesanais'
+    description: 'Trabalhos manuais e criações artísticas'
   },
   {
     id: 'autoconhecimento',
@@ -362,6 +362,181 @@ export const suggestedTags = [
     id: 'computacao-nuvem',
     label: 'Computação em Nuvem',
     description: 'Serviços e infraestrutura em nuvem'
+  },
+  {
+    id: 'arquitetura',
+    label: 'Arquitetura',
+    description: 'Projetos arquitetônicos e construção'
+  },
+  {
+    id: 'maquiagem',
+    label: 'Maquiagem',
+    description: 'Técnicas e produtos de beleza'
+  },
+  {
+    id: 'automoveis',
+    label: 'Automóveis',
+    description: 'Carros, motos e veículos'
+  },
+  {
+    id: 'agricultura',
+    label: 'Agricultura',
+    description: 'Cultivo e produção agrícola'
+  },
+  {
+    id: 'marketing',
+    label: 'Marketing',
+    description: 'Estratégias de mercado e publicidade'
+  },
+  {
+    id: 'mecanica',
+    label: 'Mecânica',
+    description: 'Manutenção e reparo de máquinas'
+  },
+  {
+    id: 'biologia',
+    label: 'Biologia',
+    description: 'Estudo dos seres vivos'
+  },
+  {
+    id: 'quimica',
+    label: 'Química',
+    description: 'Estudo da matéria e suas transformações'
+  },
+  {
+    id: 'fisica',
+    label: 'Física',
+    description: 'Estudo das leis naturais e fenômenos'
+  },
+  {
+    id: 'filosofia',
+    label: 'Filosofia',
+    description: 'Pensamento e reflexão humana'
+  },
+  {
+    id: 'sociologia',
+    label: 'Sociologia',
+    description: 'Estudo da sociedade e comportamentos'
+  },
+  {
+    id: 'geografia',
+    label: 'Geografia',
+    description: 'Estudo do espaço e território'
+  },
+  {
+    id: 'arqueologia',
+    label: 'Arqueologia',
+    description: 'Estudo de civilizações antigas'
+  },
+  {
+    id: 'meteorologia',
+    label: 'Meteorologia',
+    description: 'Estudo do clima e previsão do tempo'
+  },
+  {
+    id: 'numismatica',
+    label: 'Numismática',
+    description: 'Coleção e estudo de moedas e cédulas'
+  },
+  {
+    id: 'cafe',
+    label: 'Café',
+    description: 'Tipos de café, preparo e cultura cafeeira'
+  },
+  {
+    id: 'cerveja',
+    label: 'Cerveja',
+    description: 'Tipos de cerveja, produção e degustação'
+  },
+  {
+    id: 'vinho',
+    label: 'Vinho',
+    description: 'Vinhos, enologia e harmonização'
+  },
+  {
+    id: 'cha',
+    label: 'Chá',
+    description: 'Variedades de chá e benefícios'
+  },
+  {
+    id: 'sucos',
+    label: 'Sucos',
+    description: 'Bebidas naturais e smoothies'
+  },
+  {
+    id: 'doces',
+    label: 'Doces',
+    description: 'Sobremesas, chocolates e confeitaria'
+  },
+  {
+    id: 'churrasco',
+    label: 'Churrasco',
+    description: 'Técnicas e preparo de carnes'
+  },
+  {
+    id: 'massas',
+    label: 'Massas',
+    description: 'Culinária italiana e tipos de massa'
+  },
+  {
+    id: 'gatos',
+    label: 'Gatos',
+    description: 'Cuidados e comportamento felino'
+  },
+  {
+    id: 'cachorros',
+    label: 'Cachorros',
+    description: 'Raças e cuidados com cães'
+  },
+  {
+    id: 'passaros',
+    label: 'Pássaros',
+    description: 'Aves de estimação e silvestres'
+  },
+  {
+    id: 'peixes',
+    label: 'Peixes',
+    description: 'Aquarismo e vida marinha'
+  },
+  {
+    id: 'educacao-infantil',
+    label: 'Educação Infantil',
+    description: 'Desenvolvimento e aprendizagem infantil'
+  },
+  {
+    id: 'brinquedos',
+    label: 'Brinquedos',
+    description: 'Jogos e brincadeiras para crianças'
+  },
+  {
+    id: 'maternidade',
+    label: 'Maternidade',
+    description: 'Gravidez e cuidados com bebês'
+  },
+  {
+    id: 'paternidade',
+    label: 'Paternidade',
+    description: 'Papel do pai e criação dos filhos'
+  },
+  {
+    id: 'anime',
+    label: 'Anime',
+    description: 'Animação japonesa e mangás'
+  },
+  {
+    id: 'sitcom',
+    label: 'Sitcom',
+    description: 'Séries de comédia e humor'
+  },
+  {
+    id: 'drama',
+    label: 'Drama',
+    description: 'Séries dramáticas e novelas'
+  },
+  {
+    id: 'documentarios',
+    label: 'Documentários',
+    description: 'Séries e filmes documentais'
   }
 ];
 
