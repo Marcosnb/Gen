@@ -17,6 +17,8 @@ export function Profile() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [points, setPoints] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
 
   useEffect(() => {
     // Verificar se o usuário está logado
@@ -73,11 +75,36 @@ export function Profile() {
         setPoints(userPoints.points || 0);
       }
 
+      fetchFollowCounts();
       setLoading(false);
     };
 
     checkUser();
   }, [navigate]);
+
+  const fetchFollowCounts = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      // Get followers count
+      const { count: followers } = await supabase
+        .from('followers')
+        .select('*', { count: 'exact' })
+        .eq('following_id', session.user.id);
+
+      // Get following count
+      const { count: following } = await supabase
+        .from('followers')
+        .select('*', { count: 'exact' })
+        .eq('follower_id', session.user.id);
+
+      setFollowerCount(followers || 0);
+      setFollowingCount(following || 0);
+    } catch (error) {
+      console.error('Erro ao buscar contagem de seguidores:', error);
+    }
+  };
 
   if (loading) {
     return (
@@ -101,14 +128,32 @@ export function Profile() {
             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-semibold">{user?.email}</h2>
-              <p className="text-muted-foreground">
+              <div className="text-sm text-muted-foreground">
                 Membro desde {new Date(user?.created_at || '').toLocaleDateString()}
-                <br />
-                <span className="flex items-center gap-1">
-                  <Coins className="w-4 h-4 text-yellow-500" />
-                  Você tem {points} moedas
-                </span>
-              </p>
+              </div>
+              <div className="flex gap-6 mt-3">
+                <div className="group flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-3 py-1.5 rounded-lg transition-colors">
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                      {followingCount}
+                    </span>
+                    <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
+                      seguindo
+                    </span>
+                  </div>
+                </div>
+                <div className="h-8 w-px bg-border/60" />
+                <div className="group flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-3 py-1.5 rounded-lg transition-colors">
+                  <div className="flex flex-col items-center">
+                    <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                      {followerCount}
+                    </span>
+                    <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
+                      {followerCount === 1 ? 'seguidor' : 'seguidores'}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
             <Link 
               to="/configuracoes"
@@ -118,6 +163,60 @@ export function Profile() {
               Editar Perfil
             </Link>
           </div>
+        </div>
+
+        {/* Card de Moedas */}
+        <div className="group relative overflow-hidden bg-gradient-to-br from-[#FFD700]/10 via-[#FFA500]/10 to-[#FF8C00]/10 rounded-xl border border-yellow-500/30 p-6 shadow-lg transition-all duration-300 hover:shadow-yellow-500/10">
+          {/* Efeito de brilho no hover */}
+          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-yellow-500 to-amber-500 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-10"></div>
+          
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
+            {/* Lado esquerdo - Moedas */}
+            <div className="flex items-center gap-5">
+              {/* Ícone animado */}
+              <div className="relative transform transition-transform duration-300 group-hover:scale-105">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-500/20 to-amber-500/20 blur-md"></div>
+                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-lg">
+                  <Coins className="h-8 w-8 text-white drop-shadow" />
+                </div>
+              </div>
+              
+              {/* Contador de moedas */}
+              <div>
+                <h3 className="text-lg font-medium text-yellow-700/90 mb-1">Suas Moedas</h3>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-transparent bg-gradient-to-r from-yellow-600 to-amber-500 bg-clip-text">
+                    {points}
+                  </span>
+                  <span className="text-lg font-medium text-yellow-600/80">moedas</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lado direito - Dicas */}
+            <div className="relative md:max-w-[280px] w-full md:w-auto">
+              <div className="rounded-xl bg-gradient-to-br from-yellow-500/5 to-amber-500/5 p-4 backdrop-blur-sm">
+                <p className="text-sm font-medium text-yellow-700 mb-3">
+                  Como ganhar mais moedas:
+                </p>
+                <div className="grid grid-cols-1 gap-2.5">
+                  {[
+                    { icon: <div className="p-2 bg-yellow-500/10 rounded-full"><MessageCircle className="h-4 w-4 text-yellow-600" /></div>, text: 'Faça perguntas interessantes' },
+                    { icon: <div className="p-2 bg-yellow-500/10 rounded-full"><MessageCircle className="h-4 w-4 text-yellow-600" /></div>, text: 'Responda outras pessoas' },
+                    { icon: <div className="p-2 bg-yellow-500/10 rounded-full"><ThumbsUp className="h-4 w-4 text-yellow-600" /></div>, text: 'Receba curtidas da comunidade' }
+                  ].map((tip, i) => (
+                    <div key={i} className="flex items-center gap-2.5 text-sm text-yellow-600/90">
+                      <span className="flex-shrink-0">{tip.icon}</span>
+                      <span className="flex-1">{tip.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Decoração de fundo */}
+          <div className="absolute bottom-0 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent"></div>
         </div>
 
         {/* Card de Estatísticas */}

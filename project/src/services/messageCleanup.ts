@@ -28,11 +28,16 @@ export const setupMessageCleanup = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
 
-      console.log('Deletando mensagens marcadas como lidas...');
+      // Pega a data da meia-noite de hoje
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      console.log('Deletando mensagens marcadas como lidas antes da meia-noite...');
       const { error } = await supabase
         .from('messages')
         .delete()
-        .eq('read_boolean', true);
+        .eq('read_boolean', true)
+        .lt('read_at', today.toISOString()); // Só deleta se foi marcada como lida antes da meia-noite
 
       if (error) {
         console.error('Erro ao deletar mensagens:', error);

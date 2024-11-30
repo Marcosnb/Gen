@@ -42,6 +42,8 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [showInsufficientCoinsAlert, setShowInsufficientCoinsAlert] = useState(false);
   const [requiredCoins, setRequiredCoins] = useState(0);
   const [userCoins, setUserCoins] = useState(0);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followingAnswerUsers, setFollowingAnswerUsers] = useState<{ [key: string]: boolean }>({});
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -243,6 +245,57 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     checkLikeStatus();
   }, [question.id]);
 
+  useEffect(() => {
+    checkFollowStatus();
+  }, [question.user_id]);
+
+  useEffect(() => {
+    checkAnswersFollowStatus();
+  }, [answers]);
+
+  const checkAnswersFollowStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return;
+
+      const userIds = answers.map(answer => answer.user_id).filter(Boolean);
+      if (userIds.length === 0) return;
+
+      const { data: followers } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', session.user.id)
+        .in('following_id', userIds);
+
+      const followingMap: { [key: string]: boolean } = {};
+      followers?.forEach(f => {
+        followingMap[f.following_id] = true;
+      });
+
+      setFollowingAnswerUsers(followingMap);
+    } catch (error) {
+      console.error('Erro ao verificar status de seguidor das respostas:', error);
+    }
+  };
+
+  const checkFollowStatus = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id && question.user_id) {
+        const { data: follower } = await supabase
+          .from('followers')
+          .select('*')
+          .eq('follower_id', session.user.id)
+          .eq('following_id', question.user_id)
+          .single();
+        
+        setIsFollowing(!!follower);
+      }
+    } catch (error) {
+      console.error('Erro ao verificar status de seguidor:', error);
+    }
+  };
+
   const handleAccordionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsAccordionOpen(!isAccordionOpen);
@@ -377,6 +430,92 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     } catch (error) {
       console.error('Erro ao processar curtida:', error);
       alert('Erro ao processar curtida');
+    }
+  };
+
+  const handleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        navigate('/login');
+        return;
+      }
+
+      if (session.user.id === question.user_id) {
+        alert('Você não pode seguir a si mesmo');
+        return;
+      }
+
+      if (isFollowing) {
+        // Unfollow
+        const { error } = await supabase
+          .from('followers')
+          .delete()
+          .eq('follower_id', session.user.id)
+          .eq('following_id', question.user_id);
+
+        if (error) throw error;
+        setIsFollowing(false);
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('followers')
+          .insert([{
+            follower_id: session.user.id,
+            following_id: question.user_id,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        setIsFollowing(true);
+      }
+    } catch (error) {
+      console.error('Erro ao seguir/deixar de seguir:', error);
+      alert('Erro ao processar sua solicitação');
+    }
+  };
+
+  const handleFollowAnswerUser = async (userId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        navigate('/login');
+        return;
+      }
+
+      if (session.user.id === userId) {
+        alert('Você não pode seguir a si mesmo');
+        return;
+      }
+
+      if (followingAnswerUsers[userId]) {
+        // Unfollow
+        const { error } = await supabase
+          .from('followers')
+          .delete()
+          .eq('follower_id', session.user.id)
+          .eq('following_id', userId);
+
+        if (error) throw error;
+        setFollowingAnswerUsers(prev => ({ ...prev, [userId]: false }));
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('followers')
+          .insert([{
+            follower_id: session.user.id,
+            following_id: userId,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        setFollowingAnswerUsers(prev => ({ ...prev, [userId]: true }));
+      }
+    } catch (error) {
+      console.error('Erro ao seguir/deixar de seguir:', error);
+      alert('Erro ao processar sua solicitação');
     }
   };
 
@@ -697,6 +836,14 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                           Excluir pergunta
                         </button>
                       )}
+                      {session?.user?.id && session?.user?.id !== question.user_id && question.user_id && (
+                        <button
+                          onClick={handleFollow}
+                          className={`text-xs ${isFollowing ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
+                        >
+                          {isFollowing ? 'Seguindo' : 'Seguir'}
+                        </button>
+                      )}
                       {question.user_id && session?.user && (
                         <button
                           onClick={async (e) => {
@@ -827,6 +974,14 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
                                     >
                                       Excluir resposta
+                                    </button>
+                                  )}
+                                  {session?.user?.id && session?.user?.id !== answer.user_id && answer.user_id && (
+                                    <button
+                                      onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
+                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
+                                    >
+                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
                                     </button>
                                   )}
                                 </h4>

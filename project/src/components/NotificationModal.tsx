@@ -12,6 +12,7 @@ interface Notification {
   question_title: string;
   answer_id: string;
   read: boolean;
+  type: string;
 }
 
 interface NotificationModalProps {
@@ -105,9 +106,15 @@ export function NotificationModal({ show, onMouseEnter, onMouseLeave, userId }: 
                 className="p-4 hover:bg-muted/50 transition-colors cursor-pointer"
                 onClick={() => handleNotificationClick(notification)}
               >
-                <p className="text-sm mb-1">
-                  Nova resposta em: <span className="font-medium">{notification.question_title}</span>
-                </p>
+                {notification.type === 'follow' ? (
+                  <p className="text-sm mb-1">
+                    {notification.question_title}
+                  </p>
+                ) : (
+                  <p className="text-sm mb-1">
+                    Nova resposta em: <span className="font-medium">{notification.question_title}</span>
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(notification.created_at), {
                     addSuffix: true,
