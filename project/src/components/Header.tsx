@@ -266,7 +266,7 @@ export function Header() {
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2 group">
               <img
-                src="/logo-feedelize-menu.svg"
+                src="logo-feedelize-menu.svg"
                 alt="Feedelize Logo"
                 className="h-5 w-auto transition-transform duration-300 group-hover:scale-105 dark:invert"
               />
