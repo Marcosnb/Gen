@@ -27,7 +27,22 @@ interface Contact {
 
 export function Messages() {
   const navigate = useNavigate();
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([
+    {
+      id: '1',
+      full_name: 'João Silva',
+      avatar_url: 'https://github.com/shadcn.png',
+      last_message: 'Oi, tudo bem?',
+      unread_count: 2
+    },
+    {
+      id: '2',
+      full_name: 'Maria Santos',
+      avatar_url: 'https://github.com/shadcn.png',
+      last_message: 'Até mais!',
+      unread_count: 0
+    }
+  ]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -124,9 +139,8 @@ export function Messages() {
 
       if (messagesError) throw messagesError;
 
-      // Se não houver mensagens, limpa a lista de contatos e retorna
+      // Se não houver mensagens, mostra apenas a Ana
       if (!messagesData || messagesData.length === 0) {
-        setContacts([]);
         setLoading(false);
         return;
       }
@@ -137,9 +151,8 @@ export function Messages() {
           .filter(id => id !== userId)
       );
 
-      // Se não houver contatos, limpa a lista e retorna
+      // Se não houver contatos, mostra apenas a Ana
       if (contactIds.size === 0) {
-        setContacts([]);
         setLoading(false);
         return;
       }
@@ -643,9 +656,44 @@ export function Messages() {
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedContact || !session?.user?.id) return;
 
+    const messageContent = newMessage.trim();
+    setNewMessage('');
+
+    // Tratamento especial para mensagens enviadas para a Ana
+    if (selectedContact.id === 'ana-ai') {
+      const userMessage: Message = {
+        id: Date.now(),
+        content: messageContent,
+        created_at: new Date().toISOString(),
+        from_user_id: session.user.id,
+        to_user_id: 'ana-ai',
+        type: 'text',
+        read_boolean: true
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+
+      // Simula a resposta da Ana (será substituído pela integração Gemini)
+      setTimeout(() => {
+        const anaResponse: Message = {
+          id: Date.now() + 1,
+          content: 'Olá! Sou a Ana, sua assistente virtual. Em breve estarei integrada com o Gemini para te ajudar melhor!',
+          created_at: new Date().toISOString(),
+          from_user_id: 'ana-ai',
+          to_user_id: session.user.id,
+          type: 'text',
+          read_boolean: true
+        };
+        setMessages(prev => [...prev, anaResponse]);
+      }, 1000);
+
+      return;
+    }
+
+    // Continua com o processamento normal para outros contatos
     try {
       const messageData = {
-        content: newMessage.trim(),
+        content: messageContent,
         from_user_id: session.user.id,
         to_user_id: selectedContact.id,
         created_at: new Date().toISOString(),
@@ -655,7 +703,6 @@ export function Messages() {
       // Adiciona a mensagem otimisticamente
       const tempId = Date.now();
       setMessages(prev => [...prev, { ...messageData, id: tempId }]);
-      setNewMessage('');
 
       // Envia a mensagem para o servidor
       const { error } = await supabase
@@ -664,12 +711,10 @@ export function Messages() {
 
       if (error) {
         console.error('Erro ao enviar mensagem:', error);
-        // Remove a mensagem temporária em caso de erro
         setMessages(prev => prev.filter(msg => msg.id !== tempId));
         return;
       }
 
-      // Atualiza a lista de contatos após enviar a mensagem
       await fetchContacts(session.user.id);
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);

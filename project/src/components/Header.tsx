@@ -265,16 +265,11 @@ export function Header() {
         <div className="flex justify-between items-center h-20 py-4">
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="relative w-8 h-8">
-                <div className="absolute inset-0 bg-primary/20 rounded-xl rotate-6 group-hover:rotate-12 transition-transform duration-300" />
-                <div className="absolute inset-0 bg-primary/30 rounded-xl -rotate-6 group-hover:-rotate-12 transition-transform duration-300" />
-                <div className="relative h-full w-full bg-primary rounded-xl flex items-center justify-center text-primary-foreground font-bold">
-                  Q
-                </div>
-              </div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-primary via-primary/90 to-primary/70 text-transparent bg-clip-text group-hover:scale-105 transition-all duration-300">
-                Rede Q&A
-              </h1>
+              <img
+                src="/logo-feedelize-menu.svg"
+                alt="Feedelize Logo"
+                className="h-5 w-auto transition-transform duration-300 group-hover:scale-105 dark:invert"
+              />
             </Link>
           </div>
 
