@@ -309,7 +309,11 @@ export function Header() {
                     to="/mensagens"
                     className="relative p-2 rounded-lg hover:bg-muted/80 transition-colors duration-200"
                   >
-                    <MessageCircle className="h-5 w-5" />
+                    <img 
+                      src="/mensagem.svg" 
+                      alt="Mensagens" 
+                      className="h-5 w-5 invert-0 dark:invert opacity-70 hover:opacity-100 transition-opacity" 
+                    />
                     {unreadCount > 0 && (
                       <span className="absolute top-1.5 right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 text-xs font-medium text-white bg-red-500 rounded-full">
                         {unreadCount}
@@ -331,7 +335,11 @@ export function Header() {
                     <button
                       className="relative p-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
                     >
-                      <Bell className="h-5 w-5" />
+                      <img 
+                        src="/notificacao.svg" 
+                        alt="Notificações" 
+                        className="h-5 w-5 invert-0 dark:invert opacity-70 hover:opacity-100 transition-opacity" 
+                      />
                       {notificationUnreadCount > 0 && (
                         <span className="absolute top-0 right-0 -mt-1 -mr-1 px-1.5 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full">
                           {notificationUnreadCount}
@@ -379,23 +387,26 @@ export function Header() {
                 <button
                   className="flex items-center gap-2 p-1.5 hover:bg-muted/50 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/30"
                 >
-                  <div className="relative h-8 w-8 rounded-xl overflow-hidden ring-2 ring-primary/20 transition-transform duration-300 hover:scale-105">
-                    {userProfile?.avatar_url ? (
-                      <img
-                        src={userProfile.avatar_url}
-                        alt={userProfile.full_name || 'Avatar'}
-                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                        onError={(e) => {
-                          const img = e.target as HTMLImageElement;
-                          img.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`;
-                        }}
-                      />
-                    ) : (
-                      <div className="h-full w-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-4 w-4 text-primary" />
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-300" />
+                  <div className="relative">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                    <div className="relative h-8 w-8 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800 shadow-lg transition-transform duration-300 hover:scale-105">
+                      {userProfile?.avatar_url ? (
+                        <img
+                          src={userProfile.avatar_url}
+                          alt={userProfile.full_name || 'Avatar'}
+                          className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                          onError={(e) => {
+                            const img = e.target as HTMLImageElement;
+                            img.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`;
+                          }}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-primary/10 flex items-center justify-center">
+                          <User className="h-4 w-4 text-primary" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors duration-300" />
+                    </div>
                   </div>
                   <span className="hidden md:inline-block font-medium">
                     Meu Perfil
@@ -406,7 +417,7 @@ export function Header() {
                   <div className="absolute right-0 mt-2 w-64 rounded-xl shadow-lg bg-card border border-border/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-4 border-b border-border/50 bg-muted/30 backdrop-blur-sm">
                       <div className="flex items-center gap-3">
-                        <div className="relative h-12 w-12 rounded-xl overflow-hidden ring-2 ring-primary/20">
+                        <div className="relative h-12 w-12 rounded-full overflow-hidden ring-2 ring-white dark:ring-gray-800">
                           {userProfile?.avatar_url ? (
                             <img
                               src={userProfile.avatar_url}

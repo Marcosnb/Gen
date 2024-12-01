@@ -806,13 +806,14 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
                 <img
                   src={question.profiles?.avatar_url || '/default-avatar.png'}
                   alt={question.profiles?.full_name || 'Usuário'}
-                  className="w-11 h-11 rounded-full object-cover ring-2 ring-blue-100 dark:ring-blue-900/30 transition-all duration-300 group-hover:scale-105 group-hover:ring-blue-200 dark:group-hover:ring-blue-700/30"
+                  className="relative w-11 h-11 rounded-full object-cover ring-2 ring-white dark:ring-gray-800 shadow-lg transform group-hover:scale-105 transition-all duration-300 aspect-square"
                 />
                 {question.is_answered && (
-                  <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg animate-in fade-in duration-300">
+                  <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-white p-1.5 rounded-full shadow-lg animate-in fade-in duration-300 ring-2 ring-white dark:ring-gray-800">
                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
@@ -956,11 +957,14 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-3">
-                              <img
-                                src={answer.profiles?.avatar_url || '/default-avatar.png'}
-                                alt={answer.profiles?.full_name || 'Usuário'}
-                                className="w-8 h-8 rounded-full object-cover"
-                              />
+                              <div className="relative">
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+                                <img
+                                  src={answer.profiles?.avatar_url || '/default-avatar.png'}
+                                  alt={answer.profiles?.full_name || 'Usuário'}
+                                  className="relative w-8 h-8 rounded-full object-cover ring-2 ring-white dark:ring-gray-800 shadow-lg transform group-hover:scale-105 transition-all duration-300 aspect-square"
+                                />
+                              </div>
                               <div>
                                 <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                   {answer.profiles?.full_name || 'Usuário Anônimo'}

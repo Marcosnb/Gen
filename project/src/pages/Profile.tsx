@@ -124,15 +124,30 @@ export function Profile() {
           <div className="p-6">
             <div className="flex flex-col md:flex-row items-start gap-6">
               {/* Avatar e Informações Básicas */}
-              <div className="relative group">
+              <div className="flex items-center gap-4">
                 <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-border">
                   <UserIcon className="w-12 h-12 text-primary/60" />
+                </div>
+                {/* Informações para mobile */}
+                <div className="md:hidden">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{user?.email}</p>
+                      <p className="text-xs text-muted-foreground">Membro desde {new Date(user?.created_at || '').toLocaleDateString()}</p>
+                    </div>
+                    <Link 
+                      to="/configuracoes"
+                      className="md:hidden p-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
+                    >
+                      <Settings className="h-5 w-5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
               
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div>
+                  <div className="hidden md:block">
                     <h2 className="text-2xl font-bold text-foreground">
                       {user?.email}
                     </h2>
@@ -143,7 +158,7 @@ export function Profile() {
                   
                   <Link 
                     to="/configuracoes"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors text-sm"
+                    className="hidden md:inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors text-sm"
                   >
                     <Settings className="h-4 w-4" />
                     Editar Perfil
