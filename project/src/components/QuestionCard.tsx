@@ -6,7 +6,6 @@ import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { suggestedTags } from './TagInput';
-import { FormattedText } from './FormattedText';
 import { InsufficientCoinsAlert } from './InsufficientCoinsAlert';
 
 interface Answer {
@@ -755,7 +754,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   return (
     <div
       onClick={onClick}
-      className="relative bg-white dark:bg-[#0E072C] rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-blue-900/50 transition-all duration-300 overflow-hidden"
+      className="relative bg-white dark:bg-[#080C16] rounded-2xl shadow-sm dark:shadow-none border border-gray-100 dark:border-blue-900/50 transition-all duration-300 overflow-hidden"
     >
       {/* Alerta de moedas insuficientes */}
       {showInsufficientCoinsAlert && (
@@ -882,7 +881,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
               {question.title}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors duration-300 overflow-hidden text-ellipsis">
-              <FormattedText text={question.content} />
+              {question.content}
               {question.content.length > 150 && (
                 <span className="text-blue-500 ml-1">...</span>
               )}
@@ -945,13 +944,13 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       className="space-y-4 max-h-[500px] overflow-y-auto scroll-smooth relative"
                     >
                       {hasMoreAbove && (
-                        <div className="sticky top-0 z-10 bg-gradient-to-b from-white dark:from-[#0E072C] to-transparent h-8 w-full" />
+                        <div className="sticky top-0 z-10 bg-gradient-to-b from-white dark:from-[#080C16] to-transparent h-8 w-full" />
                       )}
                       
                       {visibleAnswers.map((answer, index) => (
                         <div 
                           key={answer.id} 
-                          className={`bg-gray-50 dark:bg-[#0E072C] rounded-xl p-4 space-y-3 transition-all duration-300 border border-transparent dark:border-blue-900/30 ${
+                          className={`bg-gray-50 dark:bg-[#080C16] rounded-xl p-4 space-y-3 transition-all duration-300 border border-transparent dark:border-blue-900/30 ${
                             index === visibleAnswers.length - 1 ? 'animate-pulse-once' : ''
                           }`}
                         >
@@ -995,13 +994,13 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                             </div>
                           </div>
                           <p className="text-sm text-gray-700 dark:text-gray-300">
-                            <FormattedText text={answer.content} />
+                            {answer.content}
                           </p>
                         </div>
                       ))}
                       
                       {hasMoreBelow && (
-                        <div className="sticky bottom-0 z-10 bg-gradient-to-t from-white dark:from-[#0E072C] to-transparent h-8 w-full" />
+                        <div className="sticky bottom-0 z-10 bg-gradient-to-t from-white dark:from-[#080C16] to-transparent h-8 w-full" />
                       )}
                     </div>
                     
@@ -1018,7 +1017,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       
                       {/* Contador no meio */}
                       {(hasMoreAbove || hasMoreBelow) && (
-                        <span className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-[#0E072C] rounded-full">
+                        <span className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-[#080C16] rounded-full">
                           {remainingAnswers}
                         </span>
                       )}
@@ -1041,7 +1040,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
                 {/* Formulário de Resposta */}
                 <form onSubmit={handleAnswerSubmit} className="mt-4">
-                  <div className="relative bg-white dark:bg-[#130B2B] rounded-xl p-3 border border-gray-200 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-all duration-300">
+                  <div className="relative bg-white dark:bg-[#080C16] rounded-xl p-3 border border-gray-200 dark:border-blue-900/30 shadow-sm hover:shadow-md transition-all duration-300">
                     <div className="relative">
                       <textarea
                         value={answer}

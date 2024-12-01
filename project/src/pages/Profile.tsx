@@ -118,169 +118,186 @@ export function Profile() {
 
   return (
     <div className="min-h-screen bg-background pt-20">
-      {/* Conteúdo principal */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Card de Informações do Usuário */}
-        <div className="bg-card rounded-lg border border-border p-6">
-          <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center">
-              <UserIcon className="w-12 h-12 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-semibold">{user?.email}</h2>
-              <div className="text-sm text-muted-foreground">
-                Membro desde {new Date(user?.created_at || '').toLocaleDateString()}
+        <div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
+          <div className="p-6">
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              {/* Avatar e Informações Básicas */}
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center ring-2 ring-border">
+                  <UserIcon className="w-12 h-12 text-primary/60" />
+                </div>
               </div>
-              <div className="flex gap-6 mt-3">
-                <div className="group flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-3 py-1.5 rounded-lg transition-colors">
-                  <div className="flex flex-col items-center">
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">
+                      {user?.email}
+                    </h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Membro desde {new Date(user?.created_at || '').toLocaleDateString()}
+                    </p>
+                  </div>
+                  
+                  <Link 
+                    to="/configuracoes"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors text-sm"
+                  >
+                    <Settings className="h-4 w-4" />
+                    Editar Perfil
+                  </Link>
+                </div>
+                
+                {/* Estatísticas de Seguidores */}
+                <div className="flex items-center gap-6 mt-6">
+                  <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
                     <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                       {followingCount}
                     </span>
                     <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
                       seguindo
                     </span>
-                  </div>
-                </div>
-                <div className="h-8 w-px bg-border/60" />
-                <div className="group flex items-center gap-2 cursor-pointer hover:bg-muted/50 px-3 py-1.5 rounded-lg transition-colors">
-                  <div className="flex flex-col items-center">
+                  </button>
+                  
+                  <div className="h-8 w-px bg-border/60" />
+                  
+                  <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
                     <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                       {followerCount}
                     </span>
                     <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
                       {followerCount === 1 ? 'seguidor' : 'seguidores'}
                     </span>
-                  </div>
+                  </button>
                 </div>
               </div>
             </div>
-            <Link 
-              to="/configuracoes"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
-            >
-              <Settings className="h-4 w-4" />
-              Editar Perfil
-            </Link>
           </div>
         </div>
 
         {/* Card de Moedas */}
-        <div className="group relative overflow-hidden bg-gradient-to-br from-[#FFD700]/10 via-[#FFA500]/10 to-[#FF8C00]/10 rounded-xl border border-yellow-500/30 p-6 shadow-lg transition-all duration-300 hover:shadow-yellow-500/10">
-          {/* Efeito de brilho no hover */}
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-yellow-500 to-amber-500 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-10"></div>
-          
-          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-8">
-            {/* Lado esquerdo - Moedas */}
-            <div className="flex items-center gap-5">
-              {/* Ícone animado */}
-              <div className="relative transform transition-transform duration-300 group-hover:scale-105">
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-500/20 to-amber-500/20 blur-md"></div>
-                <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-lg">
-                  <Coins className="h-8 w-8 text-white drop-shadow" />
+        <div className="bg-card rounded-xl border border-yellow-500/30 shadow-sm overflow-hidden">
+          <div className="p-6 relative">
+            {/* Efeito de gradiente sutil */}
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-amber-500/5" />
+            
+            <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-8">
+              {/* Contador de Moedas */}
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-md">
+                    <Coins className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-lg font-semibold text-yellow-700/90">Suas Moedas</h3>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="text-3xl font-bold text-yellow-600">
+                      {points}
+                    </span>
+                    <span className="text-base text-yellow-600/80">moedas</span>
+                  </div>
                 </div>
               </div>
-              
-              {/* Contador de moedas */}
-              <div>
-                <h3 className="text-lg font-medium text-yellow-700/90 mb-1">Suas Moedas</h3>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-transparent bg-gradient-to-r from-yellow-600 to-amber-500 bg-clip-text">
-                    {points}
-                  </span>
-                  <span className="text-lg font-medium text-yellow-600/80">moedas</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Lado direito - Dicas */}
-            <div className="relative md:max-w-[280px] w-full md:w-auto">
-              <div className="rounded-xl bg-gradient-to-br from-yellow-500/5 to-amber-500/5 p-4 backdrop-blur-sm">
-                <p className="text-sm font-medium text-yellow-700 mb-3">
-                  Como ganhar mais moedas:
-                </p>
-                <div className="grid grid-cols-1 gap-2.5">
+              {/* Dicas */}
+              <div className="md:max-w-xs w-full space-y-3">
+                <h4 className="text-sm font-medium text-yellow-700">Como ganhar mais moedas:</h4>
+                <div className="space-y-2">
                   {[
-                    { icon: <div className="p-2 bg-yellow-500/10 rounded-full"><MessageCircle className="h-4 w-4 text-yellow-600" /></div>, text: 'Faça perguntas interessantes' },
-                    { icon: <div className="p-2 bg-yellow-500/10 rounded-full"><MessageCircle className="h-4 w-4 text-yellow-600" /></div>, text: 'Responda outras pessoas' },
-                    { icon: <div className="p-2 bg-yellow-500/10 rounded-full"><ThumbsUp className="h-4 w-4 text-yellow-600" /></div>, text: 'Receba curtidas da comunidade' }
+                    { icon: <MessageCircle className="h-4 w-4" />, text: 'Faça perguntas interessantes' },
+                    { icon: <MessageCircle className="h-4 w-4" />, text: 'Responda outras pessoas' },
+                    { icon: <ThumbsUp className="h-4 w-4" />, text: 'Receba curtidas da comunidade' }
                   ].map((tip, i) => (
-                    <div key={i} className="flex items-center gap-2.5 text-sm text-yellow-600/90">
-                      <span className="flex-shrink-0">{tip.icon}</span>
-                      <span className="flex-1">{tip.text}</span>
+                    <div key={i} className="flex items-center gap-3 text-sm text-yellow-600/90">
+                      <div className="p-2 bg-yellow-500/10 rounded-lg">
+                        {tip.icon}
+                      </div>
+                      <span>{tip.text}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Decoração de fundo */}
-          <div className="absolute bottom-0 left-1/2 h-px w-3/4 -translate-x-1/2 bg-gradient-to-r from-transparent via-yellow-500/20 to-transparent"></div>
         </div>
 
         {/* Card de Estatísticas */}
-        <div className="bg-card rounded-lg border border-border p-6">
-          <h3 className="text-lg font-semibold mb-4">Estatísticas de Engajamento</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Perguntas e Respostas */}
-            <div className="space-y-6">
-              {/* Perguntas */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <HelpCircle className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">{stats?.questions_count || 0}</span>
-                    <span className="text-muted-foreground">perguntas</span>
+        <div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-6">Estatísticas de Engajamento</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Perguntas e Respostas */}
+              <div className="space-y-6">
+                {/* Perguntas */}
+                <div className="group p-4 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-primary/10 rounded-lg">
+                      <HelpCircle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-foreground">{stats?.questions_count || 0}</span>
+                        <span className="text-muted-foreground">perguntas</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Perguntas criadas por você</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Perguntas criadas por você</p>
+                </div>
+
+                {/* Respostas */}
+                <div className="group p-4 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-primary/10 rounded-lg">
+                      <MessageCircle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-foreground">{stats?.answers_count || 0}</span>
+                        <span className="text-muted-foreground">respostas</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Respostas dadas por você</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Respostas */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <MessageCircle className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">{stats?.answers_count || 0}</span>
-                    <span className="text-muted-foreground">respostas</span>
+              {/* Curtidas */}
+              <div className="space-y-6">
+                {/* Curtidas Dadas */}
+                <div className="group p-4 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-primary/10 rounded-lg">
+                      <ThumbsUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-foreground">{stats?.likes_given_count || 0}</span>
+                        <span className="text-muted-foreground">curtidas dadas</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Perguntas que você curtiu</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Respostas dadas por você</p>
                 </div>
-              </div>
-            </div>
 
-            {/* Curtidas */}
-            <div className="space-y-6">
-              {/* Curtidas Dadas */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <ThumbsUp className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">{stats?.likes_given_count || 0}</span>
-                    <span className="text-muted-foreground">curtidas dadas</span>
+                {/* Curtidas Recebidas */}
+                <div className="group p-4 rounded-lg border border-border/40 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 bg-primary/10 rounded-lg">
+                      <ThumbsUp className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-2xl font-bold text-foreground">{stats?.likes_received_count || 0}</span>
+                        <span className="text-muted-foreground">curtidas recebidas</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">Em suas perguntas e respostas</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">Perguntas que você curtiu</p>
-                </div>
-              </div>
-
-              {/* Curtidas Recebidas */}
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <ThumbsUp className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">{stats?.likes_received_count || 0}</span>
-                    <span className="text-muted-foreground">curtidas recebidas</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">Em suas perguntas e respostas</p>
                 </div>
               </div>
             </div>

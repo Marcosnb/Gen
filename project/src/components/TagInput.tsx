@@ -4,6 +4,46 @@ import { X, Check } from 'lucide-react';
 // Lista de tags sugeridas com descrições
 export const suggestedTags = [
   { 
+    id: 'namoro', 
+    label: 'Namoro',
+    description: 'Relacionamentos amorosos, encontros e vida a dois'
+  },
+  { 
+    id: 'igreja', 
+    label: 'Igreja',
+    description: 'Comunidade religiosa, eventos e vida espiritual'
+  },
+  { 
+    id: 'shopping', 
+    label: 'Shopping',
+    description: 'Centros comerciais, compras e entretenimento'
+  },
+  { 
+    id: 'feriado', 
+    label: 'Feriado',
+    description: 'Datas comemorativas, folgas e planejamento de feriados'
+  },
+  { 
+    id: 'cidade', 
+    label: 'Cidade',
+    description: 'Vida urbana, infraestrutura e desenvolvimento das cidades'
+  },
+  { 
+    id: 'compra', 
+    label: 'Compra',
+    description: 'Dicas de compras, produtos e experiências de consumo'
+  },
+  { 
+    id: 'praia', 
+    label: 'Praia',
+    description: 'Destinos litorâneos, atividades na praia e lazer'
+  },
+  { 
+    id: 'politica', 
+    label: 'Política',
+    description: 'Discussões sobre política, governo e sociedade'
+  },
+  { 
     id: 'alimentacao', 
     label: 'Alimentação',
     description: 'Culinária, receitas, restaurantes e hábitos alimentares'
@@ -581,50 +621,83 @@ const calculateTagRelevance = (tag: Tag, searchTerm: string): number => {
   return score;
 };
 
-// Função para encontrar tags relacionadas
-const getRelatedTags = (tag: Tag): Tag[] => {
-  const categoryGroups: { [key: string]: string[] } = {
-    'entretenimento': ['cinema', 'tv', 'musica', 'arte', 'jogos'],
-    'saude': ['saude', 'esporte', 'alimentacao', 'psicologia'],
-    'tecnologia': ['tecnologia', 'internet', 'jogos', 'ciencia'],
-    'sociedade': ['politica', 'economia', 'direito', 'meio-ambiente'],
-    'cultura': ['literatura', 'arte', 'historia', 'religiao'],
-    'relacionamentos': ['familia', 'casamento', 'psicologia']
-  };
+// Função para embaralhar array
+const shuffleArray = (array: any[]) => {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
 
-  // Encontra os grupos que contêm a tag atual
-  const relatedGroups = Object.entries(categoryGroups)
-    .filter(([_, tags]) => tags.includes(tag.id))
-    .flatMap(([_, tags]) => tags);
+// Função para agrupar tags por categoria
+const tagCategories: { [key: string]: string[] } = {
+  'relacionamentos': ['namoro', 'casamento', 'familia', 'sexo'],
+  'lazer': ['shopping', 'praia', 'cinema', 'viagem'],
+  'sociedade': ['politica', 'cidade', 'economia'],
+  'religiao': ['igreja', 'religiao'],
+  'tempo': ['feriado', 'ferias'],
+  'consumo': ['compra', 'moda', 'beleza'],
+  'saude': ['alimentacao', 'esporte', 'saude'],
+};
 
-  // Remove duplicatas e a própria tag
-  const uniqueRelatedIds = [...new Set(relatedGroups)].filter(id => id !== tag.id);
+// Função para obter tags relacionadas baseadas nas seleções atuais
+const getContextualTags = (currentTags: Tag[]): Tag[] => {
+  if (currentTags.length === 0) {
+    // Se não há tags selecionadas, retorna tags aleatórias
+    return shuffleArray(suggestedTags).slice(0, 5);
+  }
+
+  // Encontra as categorias das tags selecionadas
+  const selectedCategories = new Set<string>();
+  currentTags.forEach(tag => {
+    Object.entries(tagCategories).forEach(([category, tags]) => {
+      if (tags.includes(tag.id)) {
+        selectedCategories.add(category);
+      }
+    });
+  });
+
+  // Coleta tags relacionadas das categorias selecionadas
+  const relatedTagIds = new Set<string>();
+  selectedCategories.forEach(category => {
+    tagCategories[category].forEach(tagId => {
+      if (!currentTags.some(t => t.id === tagId)) {
+        relatedTagIds.add(tagId);
+      }
+    });
+  });
+
+  // Filtra e embaralha as tags relacionadas
+  const relatedTags = suggestedTags
+    .filter(tag => relatedTagIds.has(tag.id))
+    .filter(tag => !currentTags.some(t => t.id === tag.id));
   
-  return suggestedTags.filter(t => uniqueRelatedIds.includes(t.id));
+  return shuffleArray(relatedTags).slice(0, 5);
 };
 
 export function TagInput({ selectedTags, onChange, maxTags = 5 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const [randomizedTags, setRandomizedTags] = useState<Tag[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Atualiza as tags sugeridas quando o dropdown é aberto
+  useEffect(() => {
+    if (isOpen) {
+      const contextualTags = getContextualTags(selectedTags);
+      setRandomizedTags(contextualTags);
+    }
+  }, [isOpen, selectedTags]);
 
   // Filtrar e ordenar tags sugeridas
   const filteredTags = useMemo(() => {
     if (!inputValue.trim()) {
-      // Se não houver input, mostrar tags relacionadas ou populares
-      if (selectedTags.length > 0) {
-        const lastTag = selectedTags[selectedTags.length - 1];
-        const relatedTags = getRelatedTags(lastTag);
-        return relatedTags
-          .filter(tag => !selectedTags.some(selected => selected.id === tag.id))
-          .slice(0, 5);
-      }
-      // Tags populares se não houver seleção
-      return suggestedTags
-        .filter(tag => !selectedTags.some(selected => selected.id === tag.id))
-        .slice(0, 5);
+      // Se não houver input, mostrar tags contextuais
+      return randomizedTags;
     }
 
     // Filtrar e ordenar por relevância
@@ -638,7 +711,7 @@ export function TagInput({ selectedTags, onChange, maxTags = 5 }: TagInputProps)
       .sort((a, b) => b.relevance - a.relevance)
       .map(({ tag }) => tag)
       .slice(0, 5);
-  }, [inputValue, selectedTags]);
+  }, [inputValue, selectedTags, randomizedTags]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
