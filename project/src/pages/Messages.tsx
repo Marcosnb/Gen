@@ -844,7 +844,7 @@ export function Messages() {
                         <path d="M12 8V12"/>
                         <path d="M12 16H12.01"/>
                       </svg>
-                      Mensagens lidas serão excluídas automaticamente às 15:33 de cada dia
+                      Mensagens lidas serão excluídas automaticamente às 15:33
                     </div>
                   </div>
 

@@ -51,7 +51,7 @@ export function SignUp() {
       }
 
       if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
+        throw new Error('Erro ao verificar disponibilidade do nome. Tente novamente.');
       }
 
       // 1. Criar conta no Supabase Auth
@@ -60,7 +60,19 @@ export function SignUp() {
         password: formData.password,
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        // Traduzindo mensagens de erro comuns do Supabase
+        if (authError.message.includes('Password should be at least')) {
+          throw new Error('A senha deve ter pelo menos 6 caracteres');
+        } else if (authError.message.includes('Email already registered')) {
+          throw new Error('Este email já está registrado');
+        } else if (authError.message.includes('valid email')) {
+          throw new Error('Por favor, insira um email válido');
+        } else if (authError.message.includes('rate limit')) {
+          throw new Error('Muitas tentativas. Por favor, aguarde um momento');
+        }
+        throw new Error('Erro ao criar conta. Tente novamente.');
+      }
 
       // 2. Se a conta foi criada com sucesso, salvar os dados adicionais do usuário
       if (authData.user) {
@@ -81,14 +93,14 @@ export function SignUp() {
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError);
-          throw profileError;
+          throw new Error('Erro ao criar seu perfil. Por favor, tente novamente.');
         }
 
         // 3. Redirecionar para a página inicial
         navigate('/');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao criar conta');
+      setError(err instanceof Error ? err.message : 'Ocorreu um erro ao criar sua conta. Tente novamente.');
     } finally {
       setLoading(false);
     }

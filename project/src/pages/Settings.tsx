@@ -221,7 +221,7 @@ export function Settings() {
                 <button
                   type="button"
                   onClick={handleGenerateNewAvatar}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 active:scale-95 text-sm"
                 >
                   <RefreshCw className="h-4 w-4" />
                   Gerar Novo Avatar
@@ -327,6 +327,7 @@ export function Settings() {
               <button
                 type="button"
                 onClick={() => navigate('/')}
+
                 className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
               >
                 Cancelar
@@ -334,7 +335,7 @@ export function Settings() {
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1E40AF] hover:bg-[#1E3A8A] text-white font-medium rounded-lg shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 text-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 active:scale-95 text-sm"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

@@ -233,7 +233,7 @@ export function AskQuestion() {
                       Postar anonimamente
                     </label>
                     {isAnonymous && (
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/20 text-amber-800 dark:text-amber-200 border border-amber-200/60 dark:border-amber-500/30 rounded-full shadow-sm backdrop-blur-sm animate-fadeIn transition-all duration-300 hover:shadow hover:border-amber-300/80 dark:hover:border-amber-500/50">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/20 text-amber-800 dark:text-amber-200 border border-amber-200/60 dark:border-amber-500/30 rounded-full shadow-sm backdrop-blur-sm animate-fadeIn transition-all duration-300 hover:shadow hover:border-amber-300/80 dark:hover:border-amber-500/50">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-amber-500 dark:text-amber-400">
                           <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
                         </svg>

@@ -29,14 +29,24 @@ export function Login() {
         password: formData.password,
       });
 
-      if (signInError) throw signInError;
+      if (signInError) {
+        // Traduzindo mensagens de erro comuns do Supabase
+        if (signInError.message.includes('Invalid login credentials')) {
+          throw new Error('Email ou senha incorretos');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          throw new Error('Por favor, confirme seu email antes de fazer login');
+        } else if (signInError.message.includes('rate limit')) {
+          throw new Error('Muitas tentativas de login. Por favor, aguarde um momento');
+        }
+        throw signInError;
+      }
 
       // Se o login for bem-sucedido, redirecionar para a página inicial
       if (data.user) {
         navigate('/');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login');
+      setError(err instanceof Error ? err.message : 'Ocorreu um erro ao fazer login. Tente novamente.');
     } finally {
       setLoading(false);
     }
