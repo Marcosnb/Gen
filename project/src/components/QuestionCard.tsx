@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
@@ -650,103 +650,156 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       .replace(/\s+/g, '-');
 
     const tagMap: { [key: string]: any } = {
-      // Entretenimento e Cultura
-      'cinema': Film,
-      'filmes': Film,
-      'musica': Music,
-      'jogos': Gamepad,
-      'games': Gamepad,
-      'fotografia': Camera,
-      'radio': Radio,
-      'tv': Tv,
-      'televisao': Tv,
-      'teatro': Theater,
-      'arte': PenTool,
-      'cultura': Book,
-      'entretenimento': Popcorn,
-      'lazer': Coffee,
-      'diversao': Star,
-      'hobby': Heart,
-      'literatura': Book,
-      'historia': Book,
-
-      // Tecnologia e Programação
-      'programacao': Code,
-      'javascript': FileCode,
-      'python': FileCode,
-      'java': FileCode,
-      'typescript': FileCode,
-      'react': Code,
-      'node': Code,
-      'vue': Code,
-      'angular': Code,
-      'php': FileCode,
-      'desenvolvimento': Laptop,
-      'web': Globe,
-      'frontend': PenTool,
-      'backend': Database,
-      'fullstack': Code,
-      'mobile': Smartphone,
-      'api': Settings,
-      'banco-de-dados': Database,
-      'seguranca': Shield,
-      'devops': Wrench,
-      'cloud': Cloud,
-      'hardware': Cpu,
-      'software': Settings,
-      'framework': Code,
-      'biblioteca': Book,
-      'tutorial': Book,
-      'duvida': HelpCircle,
-      'iniciante': Lightbulb,
-      'avancado': Zap,
-      'carreira': Users,
-      'dica': Lightbulb,
-      'tecnologia': Laptop,
-      'internet': Globe,
-      'ciencia': Microscope,
-
-      // Negócios e Finanças
-      'economia': Wallet,
-      'financas-pessoais': Wallet,
-      'empreendedorismo': Building2,
-      'trabalho': Briefcase,
-      'direito': Scale,
-
-      // Educação
-      'escola': Book,
-      'faculdade': Book,
-      'matematica': Code,
-      'idiomas': Languages,
-
-      // Saúde e Bem-estar
-      'saude': Heart,
-      'esporte': Star,
-      'yoga': Heart,
-      'psicologia': Brain,
-
-      // Casa e Estilo de Vida
-      'decoracao': Brush,
-      'jardinagem': Flower,
-      'gastronomia': UtensilsCrossed,
-      'alimentacao': Coffee,
-      'moda': Shirt,
-      'beleza': Sparkles,
-
-      // Sociedade e Relacionamentos
-      'politica': Users,
-      'religiao': Book,
+      // Relacionamentos e Sociedade
+      'namoro': Heart,
+      'igreja': Church,
+      'religiao': Cross,
       'familia': Users,
       'casamento': Heart,
       'sexo': Heart,
+      'relacionamento': Heart,
+      'amizade': Users,
+      'politica': GanttChart,
+      'autoconhecimento': Brain,
+	
 
-      // Outros
+      // Lazer e Entretenimento
+      'shopping': Store,
+      'compra': ShoppingCart,
+      'praia': Sun,
+      'cinema': Clapperboard,
+      'tv': Tv,
+      'musica': Music,
+      'jogos': Gamepad,
+      'teatro': Theater,
+      'arte': Palette,
+      'cultura': Book,
+      'entretenimento': Popcorn,
+      'lazer': Star,
+      'diversao': Smile,
+      'hobby': Heart,
+      'literatura': Book,
+      'historia': Book,
+      'danca': PersonStanding,
+      'fotografia': Camera,
+
+      // Lugares e Mobilidade
+      'cidade': Building,
+      'viagem': Plane,
+      'transporte': Bus,
+
+      // Alimentação e Bebidas
+      'alimentacao': Pizza,
+      'gastronomia': UtensilsCrossed,
+      'culinaria': UtensilsCrossed,
+      'cafe': Coffee,
+      'cerveja': Wine,
+      'vinho': Wine,
+      'cha': Coffee,
+      'nutricao': Apple,
+      'cozinha': UtensilsCrossed,
+      'restaurante': UtensilsCrossed,
+      'comida': Drumstick,
+      'bebida': Wine,
+
+      // Educação e Conhecimento
+      'escola': School,
+      'faculdade': GraduationCap,
+      'educacao': Book,
+      'ensino': Book,
+      'aprendizado': Lightbulb,
+      'idiomas': Languages,
+      'linguas-estrangeiras': Languages,
+      'matematica': Code,
+      'filosofia': Brain,
+      'sociologia': Users,
+      'geografia': Map,
+      'arqueologia': Microscope,
+
+      // Tecnologia e Ciência
+      'tecnologia': Laptop,
+      'internet': Globe,
+      'programacao': Code,
+      'robotica': Bot,
+      'inteligencia-artificial': CircuitBoard,
+      'chatgpt': Bot,
+      'machine-learning': Network,
+      'deep-learning': Network,
+      'data-science': BarChart,
+      'computacao-nuvem': Cloud,
+      'ciencia': Microscope,
+      'fisica': Atom,
+      'quimica': TestTube,
+      'biologia': Dna,
+      'astronomia': Telescope,
+
+      // Saúde e Bem-estar
+      'saude': Stethoscope,
+      'esporte': Medal,
+      'yoga': PersonStanding,
+      'psicologia': Brain,
+      'bem-estar': Heart,
+      'exercicios': Dumbbell,
+      'meditacao': Brain,
+      'medicina': Stethoscope,
+      'musculacao': Dumbbell,
+      'corrida': PersonStanding,
+
+      // Negócios e Finanças
+      'economia': Coins,
+      'financas': Wallet,
+      'financas-pessoais': Wallet,
+      'empreendedorismo': Rocket,
+      'trabalho': Briefcase,
+      'direito': Scale,
+      'negocios': Briefcase,
+      'startup': Rocket,
+      'venture-capital': LineChart,
+      'pitch': Presentation,
+      'mvp': Target,
+      'lean-startup': Rocket,
+      'aceleradora': Rocket,
+      'marketing': Target,
+      'marketing-digital': Target,
+
+      // Casa e Estilo
+      'decoracao': Brush,
+      'jardinagem': Flower,
+      'moda': Shirt,
+      'beleza': Sparkles,
+      'casa': Building,
+      'maquiagem': Sparkles,
+      'artesanato': Brush,
+
+      // Indústria e Engenharia
+      'mecanica': Wrench,
+      'automoveis': Building,
+      'agricultura': Microscope,
+      'arquitetura': Building,
+      'engenharia': Wrench,
+
+      // Meio Ambiente e Natureza
       'meio-ambiente': Leaf,
+      'sustentabilidade': Leaf,
       'animais': Heart,
-      'viagem': Globe,
-      'futebol': Star
+      'natureza': Leaf,
+
+      // Esportes
+      'futebol': Medal,
+      'esportes': Medal,
+      'bike': Bike,
+	  
+	  // Outros
+	  'outros': Globe,
+	  'festa': PartyPopper,
+	  'estilo': Sparkles,
+	  'academia': Dumbbell,
+	  'fitness': PersonStanding,
+	  'vegano': Leaf,
+	  'feriado': Calendar,
+	 
     };
-    
+
     // Retornar o ícone correspondente ou o ícone padrão (Tag)
     return tagMap[tagToUse] || Tag;
   };
@@ -977,6 +1030,25 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
                                     >
                                       Excluir resposta
+                                    </button>
+                                  )}
+                                  {session?.user?.id && session?.user?.id !== answer.user_id && answer.user_id && (
+                                    <button
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        await supabase.auth.getSession().then(({ data: { session } }) => {
+                                          if (session) {
+                                            localStorage.setItem('selectedContactId', answer.user_id);
+                                            navigate('/mensagens');
+                                          } else {
+                                            navigate('/login');
+                                          }
+                                        });
+                                      }}
+                                      className="p-1 rounded-lg hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors flex items-center"
+                                      title="Enviar mensagem"
+                                    >
+                                      <MessageCircle className="h-4 w-4" />
                                     </button>
                                   )}
                                   {session?.user?.id && session?.user?.id !== answer.user_id && answer.user_id && (

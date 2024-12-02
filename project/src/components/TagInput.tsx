@@ -602,8 +602,23 @@ export const suggestedTags = [
   id: 'outros',
   label: 'Outros',
   description: 'Outros assuntos, assuntos gerais'
+  },
+  {
+  id: 'academia',
+  label: 'Academia',
+  description: 'Espaço para treinos e atividades físicas'
+  },
+  {
+  id: 'fitness',
+  label: 'Fitness',
+  description: 'Estilo de vida saudável com foco em exercícios'
+  },
+  {
+  id: 'vegano',
+  label: 'Vegano',
+  description: 'Alimentação e estilo de vida sem produtos de origem animal'
   }
- ];
+   ];
 
 interface Tag {
   id: string;
