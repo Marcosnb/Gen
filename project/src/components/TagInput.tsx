@@ -577,8 +577,33 @@ export const suggestedTags = [
     id: 'documentarios',
     label: 'Documentários',
     description: 'Séries e filmes documentais'
+  },
+    { 
+    id: 'estilo', 
+    label: 'Estilo',
+    description: 'Moda, tendências e expressão pessoal'
+  },
+  { 
+    id: 'comida', 
+    label: 'Comida',
+    description: 'Gastronomia, culinária e experiências alimentares'
+  },
+  { 
+    id: 'festa', 
+    label: 'Festa',
+    description: 'Celebrações, eventos sociais e comemorações'
+  },
+  { 
+    id: 'diversao', 
+    label: 'Diversão',
+    description: 'Entretenimento, lazer e momentos divertidos'
+  },
+  {
+  id: 'outros',
+  label: 'Outros',
+  description: 'Outros assuntos, assuntos gerais'
   }
-];
+ ];
 
 interface Tag {
   id: string;
