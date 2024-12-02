@@ -897,7 +897,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                           {isFollowing ? 'Seguindo' : 'Seguir'}
                         </button>
                       )}
-                      {question.user_id && session?.user && (
+                      {session?.user && session?.user?.id !== question.user_id && question.user_id && (
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
@@ -1032,7 +1032,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       Excluir resposta
                                     </button>
                                   )}
-                                  {session?.user?.id && session?.user?.id !== answer.user_id && answer.user_id && (
+                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
                                     <button
                                       onClick={async (e) => {
                                         e.stopPropagation();
@@ -1051,7 +1051,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       <MessageCircle className="h-4 w-4" />
                                     </button>
                                   )}
-                                  {session?.user?.id && session?.user?.id !== answer.user_id && answer.user_id && (
+                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
                                     <button
                                       onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
                                       className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
