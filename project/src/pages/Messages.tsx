@@ -27,22 +27,7 @@ interface Contact {
 
 export function Messages() {
   const navigate = useNavigate();
-  const [contacts, setContacts] = useState<Contact[]>([
-    {
-      id: '1',
-      full_name: 'João Silva',
-      avatar_url: 'https://github.com/shadcn.png',
-      last_message: 'Oi, tudo bem?',
-      unread_count: 2
-    },
-    {
-      id: '2',
-      full_name: 'Maria Santos',
-      avatar_url: 'https://github.com/shadcn.png',
-      last_message: 'Até mais!',
-      unread_count: 0
-    }
-  ]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -658,38 +643,7 @@ export function Messages() {
 
     const messageContent = newMessage.trim();
     setNewMessage('');
-
-    // Tratamento especial para mensagens enviadas para a Ana
-    if (selectedContact.id === 'ana-ai') {
-      const userMessage: Message = {
-        id: Date.now(),
-        content: messageContent,
-        created_at: new Date().toISOString(),
-        from_user_id: session.user.id,
-        to_user_id: 'ana-ai',
-        type: 'text',
-        read_boolean: true
-      };
-
-      setMessages(prev => [...prev, userMessage]);
-
-      // Simula a resposta da Ana (será substituído pela integração Gemini)
-      setTimeout(() => {
-        const anaResponse: Message = {
-          id: Date.now() + 1,
-          content: 'Olá! Sou a Ana, sua assistente virtual. Em breve estarei integrada com o Gemini para te ajudar melhor!',
-          created_at: new Date().toISOString(),
-          from_user_id: 'ana-ai',
-          to_user_id: session.user.id,
-          type: 'text',
-          read_boolean: true
-        };
-        setMessages(prev => [...prev, anaResponse]);
-      }, 1000);
-
-      return;
-    }
-
+	
     // Continua com o processamento normal para outros contatos
     try {
       const messageData = {
@@ -890,7 +844,7 @@ export function Messages() {
                         <path d="M12 8V12"/>
                         <path d="M12 16H12.01"/>
                       </svg>
-                      Mensagens lidas serão excluídas automaticamente à meia-noite
+                      Mensagens lidas serão excluídas automaticamente às 15:33 de cada dia
                     </div>
                   </div>
 

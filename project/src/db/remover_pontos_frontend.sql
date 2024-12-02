@@ -1,3 +1,0 @@
--- Não precisamos fazer nada no banco de dados.
--- O problema está no frontend (AskQuestion.tsx) que está adicionando pontos manualmente.
--- Precisamos editar o arquivo AskQuestion.tsx para remover a parte que adiciona pontos.

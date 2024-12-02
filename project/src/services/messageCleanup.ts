@@ -4,9 +4,9 @@ export const setupMessageCleanup = () => {
   const scheduleNextCleanup = () => {
     const now = new Date();
     const targetTime = new Date(now);
-    targetTime.setHours(0, 0, 0, 0); // Define para 00:00
+    targetTime.setHours(15, 33, 0, 0); // Define para 15:33
 
-    // Se já passou das 00:00 hoje, agenda para amanhã
+    // Se já passou das 15:33 hoje, agenda para amanhã
     if (now > targetTime) {
       targetTime.setDate(targetTime.getDate() + 1);
     }
@@ -28,16 +28,16 @@ export const setupMessageCleanup = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
 
-      // Pega a data da meia-noite de hoje
+      // Pega a data das 15:33 de hoje
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      today.setHours(15, 33, 0, 0);
 
-      console.log('Deletando mensagens marcadas como lidas antes da meia-noite...');
+      console.log('Deletando mensagens marcadas como lidas antes das 15:33...');
       const { error } = await supabase
         .from('messages')
         .delete()
         .eq('read_boolean', true)
-        .lt('read_at', today.toISOString()); // Só deleta se foi marcada como lida antes da meia-noite
+        .lt('read_at', today.toISOString()); // Só deleta se foi marcada como lida antes das 15:33
 
       if (error) {
         console.error('Erro ao deletar mensagens:', error);

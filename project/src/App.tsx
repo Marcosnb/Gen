@@ -11,14 +11,14 @@ import { Profile } from './pages/Profile';
 import { Terms } from './pages/Terms';
 import { Privacy } from './pages/Privacy';
 import { Messages } from './pages/Messages';
-import { OnlineStatusProvider } from './contexts/OnlineStatusContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 
 function App() {
   return (
     <AuthProvider>
-      <OnlineStatusProvider>
-        <BrowserRouter>
+      <BrowserRouter>
+        <SessionTimeoutProvider>
           <div className="min-h-screen bg-background text-foreground flex flex-col">
             <Header />
             
@@ -40,8 +40,8 @@ function App() {
 
             <TermsNotice />
           </div>
-        </BrowserRouter>
-      </OnlineStatusProvider>
+        </SessionTimeoutProvider>
+      </BrowserRouter>
     </AuthProvider>
   );
 }
