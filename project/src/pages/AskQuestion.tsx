@@ -150,7 +150,7 @@ export function AskQuestion() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="input w-full"
-                    placeholder="Ex: Como implementar autenticação JWT em Node.js?"
+                    placeholder="Ex: Como fazer um bolo de cenoura com chocolate?"
                     required
                     disabled={isLoading}
                   />

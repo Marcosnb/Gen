@@ -44,7 +44,7 @@ Retorne APENAS o título melhorado, sem explicações adicionais.`,
 Melhore o seguinte conteúdo: "${currentContent}"
 
 Regras:
-1. Use aproximadamente 120 caracteres (é importante usar a maior parte deste limite)
+1. Use EXATAMENTE 120 caracteres ou menos (NUNCA ultrapasse este limite)
 2. Termine a pergunta com ponto de interrogação (?)
 3. Remova quaisquer comentários entre asteriscos (** **)
 4. Mantenha o mesmo tema e contexto

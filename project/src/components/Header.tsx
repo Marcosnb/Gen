@@ -268,7 +268,7 @@ export function Header() {
               <img
                 src="/logo-feedelize-menu.svg"
                 alt="Feedelize Logo"
-                className="h-5 w-auto transition-transform duration-300 group-hover:scale-105 dark:invert"
+                className="h-8 w-auto transition-transform duration-300 group-hover:scale-105 dark:invert"
               />
             </Link>
           </div>

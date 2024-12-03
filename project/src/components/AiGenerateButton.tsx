@@ -31,7 +31,11 @@ export function AiGenerateButton({ onGenerate, type, disabled, currentTitle }: A
         return;
       }
 
-      onGenerate(text);
+      // Garante que o texto gerado não ultrapasse o limite de caracteres
+      const maxLength = type === 'title' ? 80 : 120;
+      const truncatedText = text.slice(0, maxLength);
+
+      onGenerate(truncatedText);
     } catch (error) {
       console.error('Erro ao gerar com IA:', error);
       setError('Ocorreu um erro ao gerar o conteúdo');
@@ -83,7 +87,7 @@ export function AiGenerateButton({ onGenerate, type, disabled, currentTitle }: A
             }
           `} />
           <span className={`${isGenerating ? 'animate-pulse' : ''} whitespace-nowrap`}>
-            {isGenerating ? 'Gerando...' : type === 'title' ? 'Melhorar título com IA' : 'Melhorar conteúdo com IA'}
+            {isGenerating ? 'Gerando...' : type === 'title' ? 'Melhorar título com IA' : 'Melhorar detalhes com IA'}
           </span>
         </div>
       </button>
