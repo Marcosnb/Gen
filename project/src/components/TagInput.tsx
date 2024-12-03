@@ -4,6 +4,26 @@ import { X, Check } from 'lucide-react';
 // Lista de tags sugeridas com descrições
 export const suggestedTags = [
   { 
+    id: 'bolo', 
+    label: 'Bolo',
+    description: 'Receitas, confeitaria e decoração de bolos'
+  },
+  { 
+    id: 'amizade', 
+    label: 'Amizade',
+    description: 'Relacionamentos interpessoais e laços de amizade'
+  },
+  { 
+    id: 'vida', 
+    label: 'Vida',
+    description: 'Experiências, reflexões e jornada pessoal'
+  },
+  { 
+    id: 'natureza', 
+    label: 'Natureza',
+    description: 'Meio ambiente, flora, fauna e preservação'
+  },
+  { 
     id: 'namoro', 
     label: 'Namoro',
     description: 'Relacionamentos amorosos, encontros e vida a dois'

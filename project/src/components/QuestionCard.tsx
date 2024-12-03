@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper, Edit } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
@@ -802,6 +802,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
     // Retornar o ícone correspondente ou o ícone padrão (Tag)
     return tagMap[tagToUse] || Tag;
+  };
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Evita que o card inteiro seja clicado
+    navigate(`/perguntar?edit=${question.id}`);
   };
 
   return (

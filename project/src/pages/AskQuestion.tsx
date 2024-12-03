@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TagInput } from '../components/TagInput';
 import { ArrowLeft, Send } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { AiGenerateButton } from '../components/AiGenerateButton';
 
@@ -12,6 +12,7 @@ interface Tag {
 
 export function AskQuestion() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
@@ -19,23 +20,62 @@ export function AskQuestion() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [questionId, setQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate('/login', { replace: true });
+    const params = new URLSearchParams(location.search);
+    const editId = params.get('edit');
+    if (editId) {
+      setIsEditing(true);
+      setQuestionId(editId);
+      loadQuestion(editId);
     }
-  };
+  }, [location]);
 
-  const resetForm = () => {
-    setTitle('');
-    setContent('');
-    setTags([]);
-    setIsAnonymous(false);
+  const loadQuestion = async (id: string) => {
+    try {
+      setIsLoading(true);
+      const { data: question, error } = await supabase
+        .from('questions')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      // Verificar se o usuário atual é o autor da pergunta
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id || question.user_id !== session.user.id) {
+        navigate('/');
+        return;
+      }
+
+      if (question) {
+        setTitle(question.title);
+        setContent(question.content);
+        setIsAnonymous(question.is_anonymous);
+        
+        // Carregar as tags
+        if (Array.isArray(question.tags)) {
+          const { data: tagsData } = await supabase
+            .from('tags')
+            .select('id, label')
+            .in('id', question.tags);
+
+          if (tagsData) {
+            setTags(tagsData);
+          }
+        }
+      }
+    } catch (err) {
+      setError('Erro ao carregar a pergunta');
+      console.error('Erro ao carregar pergunta:', err);
+      navigate('/');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,46 +85,57 @@ export function AskQuestion() {
     setIsLoading(true);
 
     try {
-      // Validações básicas
-      if (!title.trim()) {
-        throw new Error('O título é obrigatório');
-      }
-      if (!content.trim()) {
-        throw new Error('O conteúdo é obrigatório');
-      }
+      if (!title.trim()) throw new Error('O título é obrigatório');
+      if (!content.trim()) throw new Error('O conteúdo é obrigatório');
 
-      // Pegar o usuário atual
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         throw new Error('Você precisa estar logado para fazer uma pergunta');
       }
 
-      // Preparar os dados da pergunta
       const questionData = {
-        user_id: isAnonymous ? null : session.user.id,
         title: title.trim(),
         content: content.trim(),
         is_anonymous: isAnonymous,
         tags: tags.map(tag => tag.id),
-        created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        views: 0,
-        upvotes: 0,
-        points_spent: 0
       };
 
-      // Inserir a pergunta no banco
-      const { error: insertError } = await supabase
-        .from('questions')
-        .insert([questionData]);
+      if (isEditing && questionId) {
+        // Atualizar pergunta existente
+        const { error: updateError } = await supabase
+          .from('questions')
+          .update(questionData)
+          .eq('id', questionId)
+          .eq('user_id', session.user.id); // Garante que apenas o autor pode editar
 
-      if (insertError) throw insertError;
+        if (updateError) throw updateError;
+        setSuccess('Pergunta atualizada com sucesso!');
+      } else {
+        // Criar nova pergunta
+        const { error: insertError } = await supabase
+          .from('questions')
+          .insert([{
+            ...questionData,
+            user_id: isAnonymous ? null : session.user.id,
+            created_at: new Date().toISOString(),
+            views: 0,
+            upvotes: 0,
+            points_spent: 0
+          }]);
 
-      setSuccess('Pergunta publicada com sucesso!');
-      resetForm();
+        if (insertError) throw insertError;
+        setSuccess('Pergunta publicada com sucesso!');
+        resetForm();
+      }
+
+      // Redirecionar após sucesso
+      setTimeout(() => {
+        navigate('/');
+      }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao publicar pergunta');
-      console.error('Erro ao publicar pergunta:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao salvar pergunta');
+      console.error('Erro ao salvar pergunta:', err);
     } finally {
       setIsLoading(false);
     }
@@ -92,35 +143,22 @@ export function AskQuestion() {
 
   return (
     <div className="min-h-screen bg-background pt-20">
-      {/* Mensagens de feedback */}
-      {(error || success) && (
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          {error && (
-            <div className="p-4 bg-destructive/10 text-destructive rounded-lg">
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="p-4 bg-green-100 text-green-800 rounded-lg">
-              {success}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Conteúdo principal */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-card border border-border rounded-lg shadow-sm">
-          {/* Cabeçalho */}
           <div className="p-6 border-b border-border">
             <div className="flex items-center gap-3">
               <Link to="/" className="p-2 hover:bg-muted/80 rounded-lg transition-colors">
                 <ArrowLeft className="h-5 w-5" />
               </Link>
               <div>
-                <h1 className="text-2xl font-bold">Fazer uma Pergunta</h1>
+                <h1 className="text-2xl font-bold">
+                  {isEditing ? 'Editar Pergunta' : 'Fazer uma Pergunta'}
+                </h1>
                 <p className="mt-1 text-muted-foreground">
-                  Compartilhe seus conhecimentos com a comunidade
+                  {isEditing 
+                    ? 'Atualize sua pergunta para a comunidade'
+                    : 'Compartilhe seus conhecimentos com a comunidade'
+                  }
                 </p>
               </div>
             </div>
@@ -251,29 +289,20 @@ export function AskQuestion() {
             </div>
 
             {/* Botões */}
-            <div className="flex items-center justify-end gap-4 pt-6 border-t border-border">
+            <div className="flex justify-end gap-4">
               <Link
                 to="/"
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
               >
                 Cancelar
               </Link>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    <span>Publicando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4" />
-                    <span>Publicar Pergunta</span>
-                  </>
-                )}
+                <Send className="h-4 w-4" />
+                {isEditing ? 'Salvar alterações' : 'Publicar pergunta'}
               </button>
             </div>
           </form>
