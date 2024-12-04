@@ -43,6 +43,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [userCoins, setUserCoins] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followingAnswerUsers, setFollowingAnswerUsers] = useState<{ [key: string]: boolean }>({});
+  const [currentAnswerCount, setCurrentAnswerCount] = useState(question.answer_count || 0);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -251,6 +252,47 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   useEffect(() => {
     checkAnswersFollowStatus();
   }, [answers]);
+
+  useEffect(() => {
+    // Criar um canal específico para cada questão
+    const channel = supabase
+      .channel(`answers-${question.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escuta todos os tipos de eventos
+          schema: 'public',
+          table: 'answers',
+          filter: `question_id=eq.${question.id}`
+        },
+        async (payload) => {
+          console.log('Mudança detectada:', payload);
+          
+          // Busca o número atual de respostas
+          const { count } = await supabase
+            .from('answers')
+            .select('*', { count: 'exact', head: true })
+            .eq('question_id', question.id);
+          
+          console.log('Novo número de respostas:', count);
+          setCurrentAnswerCount(count || 0);
+          
+          // Atualiza a lista de respostas
+          fetchAnswers();
+        }
+      );
+
+    // Inscreve no canal e adiciona log para debug
+    channel.subscribe((status) => {
+      console.log(`Status da inscrição para questão ${question.id}:`, status);
+    });
+
+    // Cleanup ao desmontar
+    return () => {
+      console.log(`Removendo canal para questão ${question.id}`);
+      supabase.removeChannel(channel);
+    };
+  }, [question.id]); // Dependência apenas no ID da questão
 
   const checkAnswersFollowStatus = async () => {
     try {
@@ -808,6 +850,17 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     return tagMap[tagToUse] || Tag;
   };
 
+  // Função para determinar o estilo da barra baseado no número de respostas
+  const getIntensityStyle = (respostas: number) => {
+    // Verde -> Laranja -> Vermelho com novos níveis
+    if (respostas >= 27) return 'h-full bg-gradient-to-t from-red-600 via-red-500 to-red-400 scale-100';
+    if (respostas >= 16) return 'h-4/5 bg-gradient-to-t from-orange-600 via-orange-500 to-orange-400 scale-95';
+    if (respostas >= 10) return 'h-3/5 bg-gradient-to-t from-yellow-500 via-yellow-400 to-yellow-300 scale-90';
+    if (respostas >= 8) return 'h-2/5 bg-gradient-to-t from-lime-600 via-lime-500 to-lime-400 scale-85';
+    if (respostas >= 5) return 'h-1/5 bg-gradient-to-t from-green-600 via-green-500 to-green-400 scale-80';
+    return 'h-1/5 bg-gray-200 dark:bg-gray-700 scale-75 opacity-30'; // Sem cor para 0-3 respostas
+  };
+
   return (
     <div
       onClick={onClick}
@@ -848,11 +901,22 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
           {/* Stats Icons with Tooltips */}
           <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400">
             <div className="flex flex-col items-center group/stat relative">
-              <button className="group p-2.5 rounded-xl transition-all duration-300 hover:text-blue-500 dark:hover:text-blue-400 hover:bg-blue-100/80 dark:hover:bg-blue-900/20 backdrop-blur-sm">
-                <Eye className="h-4 w-4" />
-              </button>
-              <span className="text-xs mt-1.5 transition-all duration-300 group-hover/stat:text-blue-500">{question.views}</span>
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300 whitespace-nowrap">Visualizações</span>
+              <div className="relative w-1.5 h-12 bg-gray-200/30 dark:bg-gray-700/30 rounded-full overflow-hidden group-hover/stat:shadow-lg transition-all duration-300">
+                <div 
+                  className={`absolute bottom-0 w-full rounded-full transition-all duration-500 transform-gpu ${getIntensityStyle(currentAnswerCount)}`}
+                  style={{ 
+                    boxShadow: currentAnswerCount >= 4 ? '0 -2px 8px rgba(0,0,0,0.15)' : 'none',
+                    filter: currentAnswerCount >= 4 ? 'brightness(1.2) saturate(1.2)' : 'none'
+                  }}
+                />
+                {/* Efeito de brilho na borda apenas para respostas >= 4 */}
+                {currentAnswerCount >= 4 && (
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-white/10 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
+                )}
+              </div>
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-lg">
+                Intensidade de respostas
+              </span>
             </div>
           </div>
         </div>

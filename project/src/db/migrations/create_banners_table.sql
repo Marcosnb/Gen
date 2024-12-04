@@ -1,0 +1,8 @@
+CREATE TABLE banners (
+    id SERIAL PRIMARY KEY,
+    image_url TEXT NOT NULL,
+    target_url TEXT NOT NULL,
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
