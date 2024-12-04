@@ -658,7 +658,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       'casamento': Heart,
       'sexo': Heart,
       'relacionamento': Heart,
-      'amizade': Users,
+      'amizade': Heart,
       'politica': GanttChart,
       'autoconhecimento': Brain,
 	
@@ -797,6 +797,10 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 	  'fitness': PersonStanding,
 	  'vegano': Leaf,
 	  'feriado': Calendar,
+	  'bolo': UtensilsCrossed,
+	  'amizade': Heart,
+	  'vida': Sparkles,
+	  'natureza': Leaf,
 	 
     };
 

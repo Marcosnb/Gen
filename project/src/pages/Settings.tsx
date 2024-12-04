@@ -87,8 +87,8 @@ export function Settings() {
         .eq('id', user?.id)
         .single();
 
-      if (!currentProfile?.is_admin && currentProfile.points < 4) {
-        setUserCoins(currentProfile.points);
+      if (!currentProfile?.is_admin && (currentProfile?.points ?? 0) < 4) {
+        setUserCoins(currentProfile?.points ?? 0);
         setShowInsufficientCoinsAlert(true);
         return;
       }

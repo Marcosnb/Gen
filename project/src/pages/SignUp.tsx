@@ -39,25 +39,17 @@ export function SignUp() {
     setLoading(true);
 
     try {
-      // Verificar se já existe um usuário com o mesmo nome
-      const { data: existingUser, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('full_name', formData.name)
-        .single();
-
-      if (existingUser) {
-        throw new Error('Já existe um usuário com este nome. Por favor, escolha outro nome.');
-      }
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw new Error('Erro ao verificar disponibilidade do nome. Tente novamente.');
-      }
-
       // 1. Criar conta no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+            gender: formData.gender,
+            avatar_url: avatar
+          }
+        }
       });
 
       if (authError) {
@@ -76,14 +68,20 @@ export function SignUp() {
 
       // 2. Se a conta foi criada com sucesso, salvar os dados adicionais do usuário
       if (authData.user) {
+        // Gerar URL do avatar no momento do salvamento
+        const seed = encodeURIComponent(formData.name);
+        const gender = formData.gender === 'male' ? 'male' : 'female';
+        const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=${gender}`;
+
         const { error: profileError } = await supabase
           .from('profiles')
           .insert([
             {
               id: authData.user.id,
               full_name: formData.name,
+              email: formData.email,
               gender: formData.gender,
-              avatar_url: avatar,
+              avatar_url: avatarUrl,
               points: 0,
               is_admin: false,
               created_at: new Date().toISOString(),
@@ -93,7 +91,8 @@ export function SignUp() {
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError);
-          throw new Error('Erro ao criar seu perfil. Por favor, tente novamente.');
+          // Se houver erro na criação do perfil, ainda permitimos o login
+          // mas logamos o erro para investigação
         }
 
         // 3. Redirecionar para a página inicial
