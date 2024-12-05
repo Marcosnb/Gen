@@ -947,7 +947,7 @@ export function Messages() {
                 </div>
                 <h2 className="text-2xl font-bold mb-3">Selecione um contato</h2>
                 <p className="text-muted-foreground max-w-md">
-                  Escolha um contato da lista à esquerda para iniciar uma conversa ou continuar uma conversa existente
+                  Escolha um contato da lista para iniciar uma conversa ou continuar uma conversa existente
                 </p>
               </div>
             )}
