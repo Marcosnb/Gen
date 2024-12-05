@@ -16,6 +16,7 @@ interface UserProfile {
 
 export function Header() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -259,6 +260,14 @@ export function Header() {
     };
   }, [notificationHoverTimeout, hoverTimeout]);
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
   return (
     <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 fixed w-full top-0 z-10 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -274,12 +283,14 @@ export function Header() {
           </div>
 
           <div className="flex-1 max-w-2xl mx-8 hidden md:block">
-            <div className="relative group">
+            <form onSubmit={handleSearch} className="relative group">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className={`h-5 w-5 transition-colors duration-300 ${isSearchFocused ? 'text-primary' : 'text-muted-foreground'}`} />
               </div>
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Pesquisar perguntas..."
                 className="w-full pl-10 pr-12 py-2.5 bg-muted/50 hover:bg-muted/70 focus:bg-background border border-border/50 rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all duration-300"
                 onFocus={() => setIsSearchFocused(true)}
@@ -290,7 +301,7 @@ export function Header() {
                   <span className="text-xs">⌘</span>K
                 </kbd>
               </div>
-            </div>
+            </form>
           </div>
 
           <div className="flex items-center gap-4">

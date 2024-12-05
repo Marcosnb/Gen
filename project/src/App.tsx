@@ -11,6 +11,7 @@ import { Profile } from './pages/Profile';
 import { Terms } from './pages/Terms';
 import { Privacy } from './pages/Privacy';
 import { Messages } from './pages/Messages';
+import { SearchResults } from './pages/SearchResults';
 import { AuthProvider } from './contexts/AuthContext';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
 
@@ -34,6 +35,7 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/termos" element={<Terms />} />
                   <Route path="/privacidade" element={<Privacy />} />
+                  <Route path="/search" element={<SearchResults />} />
                 </Routes>
               </div>
             </main>
