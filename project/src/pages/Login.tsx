@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { loginRateLimiter } from '../utils/rateLimiter';
+import { validateInput, sanitizeHtml } from '../utils/securityUtils';
+import { logger } from '../utils/logger';
 
 interface FormData {
   email: string;
@@ -24,24 +27,36 @@ export function Login() {
     setLoading(true);
 
     try {
+      // Validar entrada
+      if (!validateInput(formData.email, 'email')) {
+        throw new Error('Email inválido');
+      }
+
+      // Verificar rate limit
+      if (loginRateLimiter.isRateLimited(formData.email)) {
+        throw new Error('Muitas tentativas de login. Por favor, aguarde alguns minutos.');
+      }
+
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+        email: sanitizeHtml(formData.email),
         password: formData.password,
       });
 
       if (signInError) {
-        // Traduzindo mensagens de erro comuns do Supabase
+        logger.warn('Falha no login', { email: formData.email, error: signInError.message });
+        
         if (signInError.message.includes('Invalid login credentials')) {
           throw new Error('Email ou senha incorretos');
         } else if (signInError.message.includes('Email not confirmed')) {
           throw new Error('Por favor, confirme seu email antes de fazer login');
-        } else if (signInError.message.includes('rate limit')) {
-          throw new Error('Muitas tentativas de login. Por favor, aguarde um momento');
         }
         throw signInError;
       }
 
-      // Se o login for bem-sucedido, redirecionar para a página inicial
+      // Se o login for bem-sucedido, resetar o rate limit
+      loginRateLimiter.reset(formData.email);
+      logger.info('Login bem-sucedido', { userId: data.user?.id });
+
       if (data.user) {
         navigate('/');
       }
@@ -133,15 +148,9 @@ export function Login() {
                 }`}
               >
                 {loading ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />
-                    Entrando...
-                  </>
+                  <><span className="w-4 h-4 border-2 border-primary-foreground/20 border-t-primary-foreground rounded-full animate-spin" />Entrando...</>
                 ) : (
-                  <>
-                    <LogIn className="h-4 w-4" />
-                    Entrar
-                  </>
+                  <><LogIn className="h-4 w-4" />Entrar</>
                 )}
               </button>
 

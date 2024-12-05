@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ArrowLeft, UserPlus, LogIn } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { signupRateLimiter } from '../utils/rateLimiter';
+import { validateInput, sanitizeHtml } from '../utils/securityUtils';
+import { validatePassword } from '../utils/passwordValidator';
+import { logger } from '../utils/logger';
 
 interface FormData {
   name: string;
@@ -39,13 +43,36 @@ export function SignUp() {
     setLoading(true);
 
     try {
+      // Validar entrada
+      if (!validateInput(formData.email, 'email')) {
+        throw new Error('Email inválido');
+      }
+      if (!validateInput(formData.name, 'username')) {
+        throw new Error('Nome de usuário inválido. Use entre 3 e 20 caracteres, apenas letras, números, _ e -');
+      }
+
+      // Validar força da senha
+      const passwordValidation = validatePassword(formData.password);
+      if (!passwordValidation.isValid) {
+        throw new Error(passwordValidation.errors[0]);
+      }
+
+      // Verificar rate limit
+      if (signupRateLimiter.isRateLimited(formData.email)) {
+        throw new Error('Muitas tentativas de registro. Por favor, aguarde alguns minutos.');
+      }
+
+      // Sanitizar entradas
+      const sanitizedName = sanitizeHtml(formData.name);
+      const sanitizedEmail = sanitizeHtml(formData.email);
+
       // 1. Criar conta no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
+        email: sanitizedEmail,
         password: formData.password,
         options: {
           data: {
-            full_name: formData.name,
+            full_name: sanitizedName,
             gender: formData.gender,
             avatar_url: avatar
           }
@@ -53,15 +80,14 @@ export function SignUp() {
       });
 
       if (authError) {
-        // Traduzindo mensagens de erro comuns do Supabase
+        logger.warn('Erro no registro', { email: sanitizedEmail, error: authError.message });
+        
         if (authError.message.includes('Password should be at least')) {
           throw new Error('A senha deve ter pelo menos 6 caracteres');
         } else if (authError.message.includes('Email already registered')) {
           throw new Error('Este email já está registrado');
         } else if (authError.message.includes('valid email')) {
           throw new Error('Por favor, insira um email válido');
-        } else if (authError.message.includes('rate limit')) {
-          throw new Error('Muitas tentativas. Por favor, aguarde um momento');
         }
         throw new Error('Erro ao criar conta. Tente novamente.');
       }
@@ -69,7 +95,7 @@ export function SignUp() {
       // 2. Se a conta foi criada com sucesso, salvar os dados adicionais do usuário
       if (authData.user) {
         // Gerar URL do avatar no momento do salvamento
-        const seed = encodeURIComponent(formData.name);
+        const seed = encodeURIComponent(sanitizedName);
         const gender = formData.gender === 'male' ? 'male' : 'female';
         const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&gender=${gender}`;
 
@@ -78,8 +104,8 @@ export function SignUp() {
           .insert([
             {
               id: authData.user.id,
-              full_name: formData.name,
-              email: formData.email,
+              full_name: sanitizedName,
+              email: sanitizedEmail,
               gender: formData.gender,
               avatar_url: avatarUrl,
               points: 0,
@@ -90,10 +116,13 @@ export function SignUp() {
           ]);
 
         if (profileError) {
-          console.error('Erro ao criar perfil:', profileError);
-          // Se houver erro na criação do perfil, ainda permitimos o login
-          // mas logamos o erro para investigação
+          logger.error('Erro ao criar perfil', { userId: authData.user.id, error: profileError });
+        } else {
+          logger.info('Registro bem-sucedido', { userId: authData.user.id });
         }
+
+        // Resetar rate limit após sucesso
+        signupRateLimiter.reset(formData.email);
 
         // 3. Redirecionar para a página inicial
         navigate('/');
