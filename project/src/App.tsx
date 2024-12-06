@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Header } from './components/Header';
+import { HeaderWrapper } from './components/HeaderWrapper';
 import { TermsNotice } from './components/TermsNotice';
 import { Home } from './pages/Home';
 import { AskQuestion } from './pages/AskQuestion';
@@ -21,8 +21,7 @@ function App() {
       <BrowserRouter>
         <SessionTimeoutProvider>
           <div className="min-h-screen bg-background text-foreground flex flex-col">
-            <Header />
-            
+            <HeaderWrapper />
             <main className="flex-1 container mx-auto py-8 px-4 sm:px-6 lg:px-8">
               <div className="animate-slide-in">
                 <Routes>
@@ -39,7 +38,6 @@ function App() {
                 </Routes>
               </div>
             </main>
-
             <TermsNotice />
           </div>
         </SessionTimeoutProvider>
