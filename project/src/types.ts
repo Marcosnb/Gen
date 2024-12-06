@@ -13,7 +13,13 @@ interface Answer {
   question_id: string;
   created_at: string;
   is_accepted: boolean;
-  profiles: Profile | null;
+  upvotes: number;
+  is_anonymous?: boolean;
+  profiles: {
+    id: string;
+    full_name: string;
+    avatar_url: string;
+  };
 }
 
 // Interface para uma pergunta do Supabase
@@ -28,8 +34,13 @@ interface Question {
   upvotes: number;
   is_answered: boolean;
   answer_count: number;
-  profiles: Profile | null;
   audio_url?: string;
+  is_anonymous?: boolean;
+  profiles: {
+    id: string;
+    full_name: string;
+    avatar_url: string;
+  };
 }
 
 export type { Profile, Answer, Question };

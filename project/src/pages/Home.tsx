@@ -57,7 +57,14 @@ export function Home() {
       let query = supabase
         .from('questions')
         .select(`
-          *,
+          id,
+          title,
+          content,
+          created_at,
+          user_id,
+          tags,
+          views,
+          is_anonymous,
           likes_count:question_likes(count),
           answers_count:answers(count)
         `);
@@ -134,10 +141,11 @@ export function Home() {
             is_answered: question.is_answered || false,
             answer_count: question.answers_count?.[0]?.count || 0,
             audio_url: question.audio_url,
+            is_anonymous: question.is_anonymous || false,
             profiles: profile || {
               id: question.user_id,
               full_name: 'Usuário Anônimo',
-              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
+              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
             }
           };
         });

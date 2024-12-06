@@ -132,10 +132,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         // Combinar respostas com perfis
         const answersWithProfiles = answersData.map(answer => {
           const profile = profilesData?.find(p => p.id === answer.user_id);
+          
           return {
             ...answer,
             profiles: {
-              full_name: profile?.full_name || 'Usuário Anônimo',
+              full_name: profile?.full_name || 'Usuário',
               avatar_url: profile?.avatar_url || '/default-avatar.png'
             }
           };
@@ -354,24 +355,29 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
-      // Inserir resposta
+      const answerData = {
+        question_id: question.id,
+        user_id: session.user.id,
+        content: answer.trim(),
+        created_at: new Date().toISOString()
+      };
+
+      console.log('Dados da resposta para inserir:', answerData);
+
       const { data: newAnswer, error: answerError } = await supabase
         .from('answers')
-        .insert([{
-          question_id: question.id,
-          user_id: session.user.id,
-          content: answer.trim(),
-          created_at: new Date().toISOString()
-        }])
+        .insert([answerData])
         .select()
         .single();
+
+      console.log('Resposta salva:', newAnswer);
 
       if (answerError) {
         console.error('Erro ao criar resposta:', answerError);
         throw answerError;
       }
 
-      // Buscar perfil do usuário
+      // Buscar perfil do usuário para exibição
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, avatar_url')
@@ -383,9 +389,20 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
+      // Adicionar a nova resposta ao estado local
+      const newAnswerWithProfile = {
+        ...newAnswer,
+        profiles: {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        }
+      };
+
+      setAnswers(prev => [newAnswerWithProfile, ...prev]);
+      setAnswerCount(prev => prev + 1);
+
       // Limpar o campo de resposta
       setAnswer('');
-      
     } catch (error: any) {
       console.error('Erro ao enviar resposta:', error);
       alert(error?.message || 'Erro ao enviar resposta. Por favor, tente novamente.');
@@ -1172,7 +1189,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                               </div>
                               <div>
                                 <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                                  {answer.profiles?.full_name || 'Usuário Anônimo'}
+                                  {answer.profiles?.full_name || 'Usuário'}
                                   {(isAdmin || session?.user?.id === answer.user_id) && (
                                     <button
                                       onClick={(e) => {

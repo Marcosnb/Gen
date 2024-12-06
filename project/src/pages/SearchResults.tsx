@@ -79,10 +79,11 @@ export function SearchResults() {
             likes_count: question.likes_count?.[0]?.count || 0,
             answers_count: question.answers_count?.[0]?.count || 0,
             audio_url: question.audio_url,
+            is_anonymous: question.is_anonymous || false,
             profiles: profilesMap[question.user_id] || {
               id: question.user_id,
               full_name: 'Usuário Anônimo',
-              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=default'
+              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
             }
           }));
 
