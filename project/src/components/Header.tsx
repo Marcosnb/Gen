@@ -269,9 +269,9 @@ export function Header() {
   };
 
   return (
-    <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 fixed w-full top-0 z-10 shadow-sm transition-all duration-300">
+    <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 fixed w-full top-0 z-50 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20 py-4">
+        <div className="flex justify-between items-center h-16 py-2">
           <div className="flex items-center gap-6">
             <Link to="/" className="flex items-center gap-2 group">
               <img

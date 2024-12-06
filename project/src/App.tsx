@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { HeaderWrapper } from './components/HeaderWrapper';
+import { Header } from './components/Header';
 import { TermsNotice } from './components/TermsNotice';
 import { Home } from './pages/Home';
 import { AskQuestion } from './pages/AskQuestion';
@@ -21,7 +21,7 @@ function App() {
       <BrowserRouter>
         <SessionTimeoutProvider>
           <div className="min-h-screen bg-background text-foreground flex flex-col">
-            <HeaderWrapper />
+            <Header />
             <main className="flex-1 container mx-auto py-8 px-4 sm:px-6 lg:px-8">
               <div className="animate-slide-in">
                 <Routes>
@@ -32,8 +32,8 @@ function App() {
                   <Route path="/configuracoes" element={<Settings />} />
                   <Route path="/mensagens" element={<Messages />} />
                   <Route path="/profile" element={<Profile />} />
-                  <Route path="/termos" element={<Terms />} />
-                  <Route path="/privacidade" element={<Privacy />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
                   <Route path="/search" element={<SearchResults />} />
                 </Routes>
               </div>
