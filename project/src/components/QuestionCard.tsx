@@ -42,8 +42,16 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [requiredCoins, setRequiredCoins] = useState(0);
   const [userCoins, setUserCoins] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isAnswerAnonymous, setIsAnswerAnonymous] = useState(false);
   const [followingAnswerUsers, setFollowingAnswerUsers] = useState<{ [key: string]: boolean }>({});
   const [currentAnswerCount, setCurrentAnswerCount] = useState(question.answer_count || 0);
+
+  // Estados do player de áudio
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -867,23 +875,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     return tagMap[tagToUse] || Tag;
   };
 
-  // Função para determinar o estilo da barra baseado no número de respostas
-  const getIntensityStyle = (respostas: number) => {
-    // Verde -> Laranja -> Vermelho com novos níveis
-    if (respostas >= 27) return 'h-full bg-gradient-to-t from-red-600 via-red-500 to-red-400 scale-100';
-    if (respostas >= 16) return 'h-4/5 bg-gradient-to-t from-orange-600 via-orange-500 to-orange-400 scale-95';
-    if (respostas >= 10) return 'h-3/5 bg-gradient-to-t from-yellow-500 via-yellow-400 to-yellow-300 scale-90';
-    if (respostas >= 8) return 'h-2/5 bg-gradient-to-t from-lime-600 via-lime-500 to-lime-400 scale-85';
-    if (respostas >= 5) return 'h-1/5 bg-gradient-to-t from-green-600 via-green-500 to-green-400 scale-80';
-    return 'h-1/5 bg-gray-200 dark:bg-gray-700 scale-75 opacity-30'; // Sem cor para 0-3 respostas
-  };
-
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const progressRef = useRef<HTMLDivElement>(null);
-
   // Funções para controle do áudio
   const toggleAudio = () => {
     if (audioRef.current) {
@@ -921,6 +912,17 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  // Função para determinar o estilo da barra baseado no número de respostas
+  const getIntensityStyle = (respostas: number) => {
+    // Verde -> Laranja -> Vermelho com novos níveis
+    if (respostas >= 27) return 'h-full bg-gradient-to-t from-red-600 via-red-500 to-red-400 scale-100';
+    if (respostas >= 16) return 'h-4/5 bg-gradient-to-t from-orange-600 via-orange-500 to-orange-400 scale-95';
+    if (respostas >= 10) return 'h-3/5 bg-gradient-to-t from-yellow-500 via-yellow-400 to-yellow-300 scale-90';
+    if (respostas >= 8) return 'h-2/5 bg-gradient-to-t from-lime-600 via-lime-500 to-lime-400 scale-85';
+    if (respostas >= 5) return 'h-1/5 bg-gradient-to-t from-green-600 via-green-500 to-green-400 scale-80';
+    return 'h-1/5 bg-gray-200 dark:bg-gray-700 scale-75 opacity-30'; // Sem cor para 0-3 respostas
   };
 
   return (
@@ -1067,12 +1069,15 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
             <div className="mt-4 text-sm text-muted-foreground">
               {question.content}
               
-              {/* Audio Player */}
+              {/* Player de Áudio */}
               {question.audio_url && (
                 <div className="mt-4 flex flex-col gap-2">
                   <div className="flex items-center gap-2 px-3 py-2 bg-card dark:bg-card/80 border border-border rounded-lg shadow-sm">
                     <button
-                      onClick={toggleAudio}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleAudio();
+                      }}
                       className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
                     >
                       {isPlaying ? (
@@ -1085,7 +1090,10 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                     <div className="flex-1 flex items-center gap-2">
                       <div
                         ref={progressRef}
-                        onClick={handleProgressClick}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProgressClick(e);
+                        }}
                         className="flex-1 h-1.5 bg-muted dark:bg-muted/50 rounded-full cursor-pointer group relative"
                       >
                         <div

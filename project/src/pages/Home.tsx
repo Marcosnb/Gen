@@ -65,6 +65,7 @@ export function Home() {
           tags,
           views,
           is_anonymous,
+          audio_url,
           likes_count:question_likes(count),
           answers_count:answers(count)
         `);
