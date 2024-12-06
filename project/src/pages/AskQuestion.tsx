@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TagInput } from '../components/TagInput';
-import { ArrowLeft, Send } from 'lucide-react';
+import { ArrowLeft, Send, Mic, Square, Play, Trash2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { AiGenerateButton } from '../components/AiGenerateButton';
@@ -19,6 +19,12 @@ export function AskQuestion() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -38,6 +44,55 @@ export function AskQuestion() {
     setIsAnonymous(false);
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+        setAudioBlob(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      setError('Erro ao acessar o microfone. Verifique as permissões do navegador.');
+      console.error('Erro ao iniciar gravação:', err);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const playAudio = () => {
+    if (audioBlob && audioRef.current) {
+      audioRef.current.src = URL.createObjectURL(audioBlob);
+      audioRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const deleteAudio = () => {
+    setAudioBlob(null);
+    if (audioRef.current) {
+      audioRef.current.src = '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -45,7 +100,6 @@ export function AskQuestion() {
     setIsLoading(true);
 
     try {
-      // Validações básicas
       if (!title.trim()) {
         throw new Error('O título é obrigatório');
       }
@@ -53,19 +107,34 @@ export function AskQuestion() {
         throw new Error('O conteúdo é obrigatório');
       }
 
-      // Pegar o usuário atual
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
         throw new Error('Você precisa estar logado para fazer uma pergunta');
       }
 
-      // Preparar os dados da pergunta
+      let audioUrl = null;
+      if (audioBlob) {
+        const audioFileName = `audio-${Date.now()}.wav`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('question-audios')
+          .upload(audioFileName, audioBlob);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = await supabase.storage
+          .from('question-audios')
+          .getPublicUrl(audioFileName);
+          
+        audioUrl = publicUrl;
+      }
+
       const questionData = {
         user_id: isAnonymous ? null : session.user.id,
         title: title.trim(),
         content: content.trim(),
         is_anonymous: isAnonymous,
         tags: tags.map(tag => tag.id),
+        audio_url: audioUrl,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         views: 0,
@@ -73,7 +142,6 @@ export function AskQuestion() {
         points_spent: 0
       };
 
-      // Inserir a pergunta no banco
       const { error: insertError } = await supabase
         .from('questions')
         .insert([questionData]);
@@ -130,7 +198,7 @@ export function AskQuestion() {
             {/* Seção do Título */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium leading-6">Informações da Pergunta</h3>
-              
+
               <div className="space-y-6">
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
@@ -201,12 +269,67 @@ export function AskQuestion() {
                   <TagInput
                     selectedTags={tags}
                     onChange={setTags}
-                    maxTags={5}
+                    maxTags={3}
                     disabled={isLoading}
                     className="min-h-[56px]"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Adicione até 5 tags para ajudar outras pessoas a encontrar sua pergunta
+                    Adicione até 3 tags para ajudar outras pessoas a encontrar sua pergunta
+                  </p>
+                </div>
+
+                {/* Gravação de Áudio */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Áudio da Pergunta (Opcional)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {!audioBlob ? (
+                      <button
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                          isRecording
+                            ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                            : 'border border-primary text-primary hover:bg-primary/5'
+                        }`}
+                      >
+                        {isRecording ? (
+                          <>
+                            <Square className="h-4 w-4 mr-2 text-primary" />
+                            <span>Parar Gravação</span>
+                          </>
+                        ) : (
+                          <>
+                            <Mic className="h-4 w-4 mr-2 text-primary" />
+                            <span>Gravar Áudio</span>
+                          </>
+                        )}
+                      </button>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={playAudio}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg"
+                        >
+                          <Play className="h-4 w-4" />
+                          <span>Reproduzir</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={deleteAudio}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>Excluir</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <audio ref={audioRef} onEnded={() => setIsPlaying(false)} className="hidden" />
+                  <p className="text-xs text-muted-foreground">
+                    Grave um áudio para complementar sua pergunta (máximo 2 minutos)
                   </p>
                 </div>
               </div>
@@ -215,7 +338,7 @@ export function AskQuestion() {
             {/* Seção de Opções de Publicação */}
             <div className="space-y-6">
               <h3 className="text-lg font-medium leading-6 border-t border-border pt-6">Opções de Publicação</h3>
-              
+
               <div className="flex flex-col sm:flex-row items-start gap-3 p-6 bg-muted/40 rounded-lg">
                 <div className="flex items-center h-6">
                   <input

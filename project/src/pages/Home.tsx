@@ -133,6 +133,7 @@ export function Home() {
             upvotes: question.likes_count?.[0]?.count || 0,
             is_answered: question.is_answered || false,
             answer_count: question.answers_count?.[0]?.count || 0,
+            audio_url: question.audio_url,
             profiles: profile || {
               id: question.user_id,
               full_name: 'Usuário Anônimo',

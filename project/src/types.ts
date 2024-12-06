@@ -29,6 +29,7 @@ interface Question {
   is_answered: boolean;
   answer_count: number;
   profiles: Profile | null;
+  audio_url?: string;
 }
 
 export type { Profile, Answer, Question };

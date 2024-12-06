@@ -78,6 +78,7 @@ export function SearchResults() {
             views: question.views || 0,
             likes_count: question.likes_count?.[0]?.count || 0,
             answers_count: question.answers_count?.[0]?.count || 0,
+            audio_url: question.audio_url,
             profiles: profilesMap[question.user_id] || {
               id: question.user_id,
               full_name: 'Usuário Anônimo',

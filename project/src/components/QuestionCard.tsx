@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper, Volume2, Play, Pause } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
@@ -861,6 +861,51 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     return 'h-1/5 bg-gray-200 dark:bg-gray-700 scale-75 opacity-30'; // Sem cor para 0-3 respostas
   };
 
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const progressRef = useRef<HTMLDivElement>(null);
+
+  // Funções para controle do áudio
+  const toggleAudio = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (audioRef.current && progressRef.current) {
+      const rect = progressRef.current.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      audioRef.current.currentTime = pos * audioRef.current.duration;
+    }
+  };
+
+  const formatTime = (time: number) => {
+    if (!isFinite(time) || isNaN(time)) return '0:00';
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div
       onClick={onClick}
@@ -1002,12 +1047,51 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
             <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 line-clamp-2 leading-snug">
               {question.title}
             </h3>
-            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors duration-300 overflow-hidden text-ellipsis">
+            <div className="mt-4 text-sm text-muted-foreground">
               {question.content}
-              {question.content.length > 150 && (
-                <span className="text-blue-500 ml-1">...</span>
+              
+              {/* Audio Player */}
+              {question.audio_url && (
+                <div className="mt-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-card dark:bg-card/80 border border-border rounded-lg shadow-sm">
+                    <button
+                      onClick={toggleAudio}
+                      className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+                    >
+                      {isPlaying ? (
+                        <Pause className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Play className="h-4 w-4 text-primary" />
+                      )}
+                    </button>
+                    
+                    <div className="flex-1 flex items-center gap-2">
+                      <div
+                        ref={progressRef}
+                        onClick={handleProgressClick}
+                        className="flex-1 h-1.5 bg-muted dark:bg-muted/50 rounded-full cursor-pointer group relative"
+                      >
+                        <div
+                          className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all group-hover:bg-primary/90"
+                          style={{ width: `${(currentTime / duration) * 100}%` }}
+                        />
+                      </div>
+                      <span className="text-xs tabular-nums text-muted-foreground min-w-[40px]">
+                        {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : '0:00'}
+                      </span>
+                    </div>
+                  </div>
+                  <audio
+                    ref={audioRef}
+                    src={question.audio_url}
+                    onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleLoadedMetadata}
+                    onEnded={() => setIsPlaying(false)}
+                    className="hidden"
+                  />
+                </div>
               )}
-            </p>
+            </div>
           </div>
 
           {/* Interactive Tags */}
