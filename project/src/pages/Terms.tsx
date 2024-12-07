@@ -167,7 +167,7 @@ export function Terms() {
             </p>
             <div className="flex items-center gap-4">
               <Link 
-                to="/privacidade" 
+                to="/privacy" 
                 className="text-primary hover:text-primary/90 hover:underline transition-colors"
               >
                 Política de Privacidade

@@ -489,7 +489,7 @@ export function Header() {
                       </Link>
 
                       <Link
-                        to="/privacidade"
+                        to="/privacy"
                         className="flex items-center gap-3 px-3 py-2.5 text-sm hover:bg-muted/50 rounded-lg transition-all duration-300 mt-1 group"
                         onClick={() => setShowDropdown(false)}
                       >
@@ -523,7 +523,7 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-2">
                 <Link
                   to="/login"
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-muted/50 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary/30"

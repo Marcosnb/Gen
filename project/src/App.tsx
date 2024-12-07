@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { TermsNotice } from './components/TermsNotice';
+import { MobileAuthCard } from './components/MobileAuthCard';
 import { Home } from './pages/Home';
 import { AskQuestion } from './pages/AskQuestion';
 import { Login } from './pages/Login';
@@ -39,6 +40,7 @@ function App() {
               </div>
             </main>
             <TermsNotice />
+            <MobileAuthCard />
           </div>
         </SessionTimeoutProvider>
       </BrowserRouter>

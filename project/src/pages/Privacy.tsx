@@ -152,7 +152,7 @@ export function Privacy() {
             </p>
             <div className="flex items-center gap-4">
               <Link 
-                to="/termos" 
+                to="/terms" 
                 className="text-primary hover:text-primary/90 hover:underline transition-colors"
               >
                 Termos de Uso
