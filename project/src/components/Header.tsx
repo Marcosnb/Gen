@@ -277,7 +277,7 @@ export function Header() {
               <img
                 src="/logo-feedelize-menu.svg"
                 alt="Feedelize Logo"
-                className="h-8 w-auto transition-transform duration-300 group-hover:scale-105 dark:invert"
+                className="h-12 w-auto transition-transform duration-300 group-hover:scale-105 [filter:brightness(0)_saturate(100%)_invert(31%)_sepia(98%)_saturate(1000%)_hue-rotate(211deg)_brightness(97%)_contrast(107%)]"
               />
             </Link>
           </div>
@@ -307,6 +307,7 @@ export function Header() {
           <div className="flex items-center gap-4">
             {user && (
               <>
+
                 <Link 
                   to="/perguntar" 
                   className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 active:scale-95"
@@ -335,6 +336,7 @@ export function Header() {
                   <div 
                     className="relative"
                     onMouseEnter={() => handleMouseEnter('notifications')}
+
                     onMouseLeave={() => {
                       const timeout = setTimeout(() => {
                         setShowNotifications(false);
@@ -386,12 +388,14 @@ export function Header() {
                   </button>
                 </div>
               </>
+
             )}
 
             {user ? (
               <div 
                 className="relative"
                 onMouseEnter={() => handleMouseEnter('profile')}
+
                 onMouseLeave={handleMouseLeave}
                 ref={dropdownRef}
               >
@@ -405,6 +409,8 @@ export function Header() {
                         <img
                           src={userProfile.avatar_url}
                           alt={userProfile.full_name || 'Avatar'}
+
+
                           className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
                           onError={(e) => {
                             const img = e.target as HTMLImageElement;
@@ -433,6 +439,8 @@ export function Header() {
                             <img
                               src={userProfile.avatar_url}
                               alt={userProfile.full_name || 'Avatar'}
+
+
                               className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
                             />
                           ) : (
