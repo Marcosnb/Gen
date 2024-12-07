@@ -272,7 +272,7 @@ export function Header() {
     <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/40 fixed w-full top-0 z-50 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between md:justify-start items-center h-16 py-2">
-          <div className="flex-1 md:flex-none flex items-center gap-6 justify-center md:justify-start">
+          <div className={`flex items-center gap-6 ${!user ? "flex-1 justify-center md:justify-start" : ""}`}>
             <Link to="/" className="flex items-center gap-2 group">
               <img
                 src="/logo-feedelize-menu.svg"
