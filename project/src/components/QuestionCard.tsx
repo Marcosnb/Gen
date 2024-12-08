@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper, Volume2, Play, Pause } from 'lucide-react';
+import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper, Volume2, Play, Pause, Mic } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
@@ -13,6 +13,7 @@ interface Answer {
   content: string;
   created_at: string;
   user_id: string;
+  audio_url?: string | null;
   profiles: {
     full_name: string;
     avatar_url: string;
@@ -52,6 +53,22 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
+
+  // Estados de gravação de áudio
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  // Estado para controlar o áudio de cada resposta
+  const [playingAnswers, setPlayingAnswers] = useState<{ [key: string]: boolean }>({});
+  const [answerTimes, setAnswerTimes] = useState<{ [key: string]: { current: number; total: number } }>({});
+  const answerAudiosRef = useRef<{ [key: string]: HTMLAudioElement }>({});
+
+  // Estado para controlar o áudio da pergunta
+  const [questionAudioPlaying, setQuestionAudioPlaying] = useState(false);
+  const [questionTime, setQuestionTime] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+  const questionAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const VISIBLE_ANSWERS = 2;
   const visibleAnswers = answers.slice(startIndex, startIndex + VISIBLE_ANSWERS);
@@ -110,55 +127,46 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const fetchAnswers = async () => {
     try {
       setIsLoading(true);
-      console.log('Buscando respostas para a pergunta:', question.id);
-      
-      // Primeiro, buscar as respostas
       const { data: answersData, error: answersError } = await supabase
         .from('answers')
         .select('*')
         .eq('question_id', question.id)
         .order('created_at', { ascending: false });
 
-      if (answersError) {
-        console.error('Erro ao buscar respostas:', answersError);
-        return;
-      }
+      if (answersError) throw answersError;
 
-      // Se temos respostas, buscar os perfis dos usuários
-      if (answersData && answersData.length > 0) {
+      if (answersData) {
+        // Pegar os IDs únicos dos usuários
+        const userIds = [...new Set(answersData.map(answer => answer.user_id))];
+
         // Buscar todos os perfis de uma vez
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
-          .in('id', answersData.map(a => a.user_id));
+          .in('id', userIds);
 
-        if (profilesError) {
-          console.error('Erro ao buscar perfis:', profilesError);
-          return;
-        }
+        if (profilesError) throw profilesError;
 
-        // Combinar respostas com perfis
-        const answersWithProfiles = answersData.map(answer => {
-          const profile = profilesData?.find(p => p.id === answer.user_id);
-          
-          return {
-            ...answer,
-            profiles: {
-              full_name: profile?.full_name || 'Usuário',
-              avatar_url: profile?.avatar_url || '/default-avatar.png'
-            }
-          };
-        });
+        // Criar um mapa de perfis por ID
+        const profilesMap = (profilesData || []).reduce((acc, profile) => {
+          acc[profile.id] = profile;
+          return acc;
+        }, {});
 
-        console.log('Respostas com perfis:', answersWithProfiles);
+        // Combinar as respostas com os perfis
+        const answersWithProfiles = answersData.map(answer => ({
+          ...answer,
+          profiles: profilesMap[answer.user_id] || {
+            id: answer.user_id,
+            full_name: 'Usuário',
+            avatar_url: '/default-avatar.png'
+          }
+        }));
+
         setAnswers(answersWithProfiles);
-        setAnswerCount(answersWithProfiles.length);
-      } else {
-        setAnswers([]);
-        setAnswerCount(0);
       }
     } catch (error) {
-      console.error('Erro ao buscar respostas:', error);
+      console.error('Erro ao carregar respostas:', error);
     } finally {
       setIsLoading(false);
     }
@@ -353,39 +361,33 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
   const handleAnswerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer.trim()) return;
+    if (!answer.trim() && !audioUrl) return;
 
     try {
       // Verificar se o usuário está logado
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        alert('Você precisa estar logado para responder');
+      if (!session) {
+        navigate('/login');
         return;
       }
 
       const answerData = {
+        content: answer.trim(),
         question_id: question.id,
         user_id: session.user.id,
-        content: answer.trim(),
+        audio_url: audioUrl,
         created_at: new Date().toISOString()
       };
-
-      console.log('Dados da resposta para inserir:', answerData);
 
       const { data: newAnswer, error: answerError } = await supabase
         .from('answers')
         .insert([answerData])
-        .select()
+        .select('*')
         .single();
 
-      console.log('Resposta salva:', newAnswer);
+      if (answerError) throw answerError;
 
-      if (answerError) {
-        console.error('Erro ao criar resposta:', answerError);
-        throw answerError;
-      }
-
-      // Buscar perfil do usuário para exibição
+      // Buscar o perfil do usuário
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, avatar_url')
@@ -397,20 +399,19 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
         return;
       }
 
-      // Adicionar a nova resposta ao estado local
-      const newAnswerWithProfile = {
+      // Combinar a resposta com os dados do perfil
+      const answerWithProfile = {
         ...newAnswer,
-        profiles: {
-          full_name: profile.full_name,
-          avatar_url: profile.avatar_url
-        }
+        profiles: profile
       };
 
-      setAnswers(prev => [newAnswerWithProfile, ...prev]);
+      // Atualizar a lista de respostas localmente
+      setAnswers(prev => [...prev, answerWithProfile]);
       setAnswerCount(prev => prev + 1);
-
-      // Limpar o campo de resposta
+      
+      // Limpar os campos após envio
       setAnswer('');
+      setAudioUrl(null);
     } catch (error: any) {
       console.error('Erro ao enviar resposta:', error);
       alert(error?.message || 'Erro ao enviar resposta. Por favor, tente novamente.');
@@ -914,6 +915,103 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // Função para iniciar gravação
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+        
+        // Upload do áudio para o Supabase
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('audio_answers')
+          .upload(`answer-${Date.now()}.webm`, audioBlob);
+
+        if (uploadError) {
+          console.error('Erro ao fazer upload do áudio:', uploadError);
+          return;
+        }
+
+        // Obter URL pública do áudio
+        const { data: { publicUrl } } = supabase.storage
+          .from('audio_answers')
+          .getPublicUrl(uploadData.path);
+
+        setAudioUrl(publicUrl);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Erro ao iniciar gravação:', error);
+    }
+  };
+
+  // Função para parar gravação
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+    }
+  };
+
+  // Estado para controlar o áudio de cada resposta
+  const toggleAnswerAudio = (answerId: string, audioUrl: string) => {
+    // Se já existe um áudio para esta resposta
+    if (answerAudiosRef.current[answerId]) {
+      if (playingAnswers[answerId]) {
+        answerAudiosRef.current[answerId].pause();
+      } else {
+        answerAudiosRef.current[answerId].play();
+      }
+      setPlayingAnswers(prev => ({ ...prev, [answerId]: !prev[answerId] }));
+    } else {
+      // Se é a primeira vez tocando este áudio
+      const audio = new Audio(audioUrl);
+      answerAudiosRef.current[answerId] = audio;
+
+      audio.addEventListener('timeupdate', () => {
+        setAnswerTimes(prev => ({
+          ...prev,
+          [answerId]: {
+            current: audio.currentTime,
+            total: audio.duration
+          }
+        }));
+      });
+
+      audio.addEventListener('ended', () => {
+        setPlayingAnswers(prev => ({ ...prev, [answerId]: false }));
+      });
+
+      audio.addEventListener('loadedmetadata', () => {
+        setAnswerTimes(prev => ({
+          ...prev,
+          [answerId]: {
+            current: 0,
+            total: audio.duration
+          }
+        }));
+      });
+
+      audio.play();
+      setPlayingAnswers(prev => ({ ...prev, [answerId]: true }));
+    }
+  };
+
   // Função para determinar o estilo da barra baseado no número de respostas
   const getIntensityStyle = (respostas: number) => {
     // Verde -> Laranja -> Vermelho com novos níveis
@@ -923,6 +1021,42 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     if (respostas >= 8) return 'h-2/5 bg-gradient-to-t from-lime-600 via-lime-500 to-lime-400 scale-85';
     if (respostas >= 5) return 'h-1/5 bg-gradient-to-t from-green-600 via-green-500 to-green-400 scale-80';
     return 'h-1/5 bg-gray-200 dark:bg-gray-700 scale-75 opacity-30'; // Sem cor para 0-3 respostas
+  };
+
+  // Função para controlar o áudio da pergunta
+  const toggleQuestionAudio = (audioUrl: string) => {
+    if (questionAudioRef.current) {
+      if (questionAudioPlaying) {
+        questionAudioRef.current.pause();
+      } else {
+        questionAudioRef.current.play();
+      }
+      setQuestionAudioPlaying(!questionAudioPlaying);
+    } else {
+      const audio = new Audio(audioUrl);
+      questionAudioRef.current = audio;
+
+      audio.addEventListener('timeupdate', () => {
+        setQuestionTime({
+          current: audio.currentTime,
+          total: audio.duration
+        });
+      });
+
+      audio.addEventListener('ended', () => {
+        setQuestionAudioPlaying(false);
+      });
+
+      audio.addEventListener('loadedmetadata', () => {
+        setQuestionTime({
+          current: 0,
+          total: audio.duration
+        });
+      });
+
+      audio.play();
+      setQuestionAudioPlaying(true);
+    }
   };
 
   return (
@@ -1068,55 +1202,49 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
             </h3>
             <div className="mt-4 text-sm text-muted-foreground">
               {question.content}
-              
-              {/* Player de Áudio */}
-              {question.audio_url && (
-                <div className="mt-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 px-3 py-2 bg-card dark:bg-card/80 border border-border rounded-lg shadow-sm">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleAudio();
-                      }}
-                      className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
-                    >
-                      {isPlaying ? (
-                        <Pause className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Play className="h-4 w-4 text-primary" />
-                      )}
-                    </button>
-                    
-                    <div className="flex-1 flex items-center gap-2">
-                      <div
-                        ref={progressRef}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleProgressClick(e);
-                        }}
-                        className="flex-1 h-1.5 bg-muted dark:bg-muted/50 rounded-full cursor-pointer group relative"
-                      >
-                        <div
-                          className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all group-hover:bg-primary/90"
-                          style={{ width: `${(currentTime / duration) * 100}%` }}
-                        />
-                      </div>
-                      <span className="text-xs tabular-nums text-muted-foreground min-w-[40px]">
-                        {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : '0:00'}
-                      </span>
-                    </div>
-                  </div>
-                  <audio
-                    ref={audioRef}
-                    src={question.audio_url}
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleLoadedMetadata}
-                    onEnded={() => setIsPlaying(false)}
-                    className="hidden"
-                  />
-                </div>
-              )}
             </div>
+            
+            {/* Player de Áudio */}
+            {question.audio_url && (
+              <div className="mt-4 flex flex-col gap-2">
+                <div className="flex items-center gap-2 px-3 py-2 bg-card dark:bg-card/80 border border-border rounded-lg shadow-sm">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleQuestionAudio(question.audio_url);
+                    }}
+                    className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+                  >
+                    {questionAudioPlaying ? (
+                      <Pause className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Play className="h-4 w-4 text-primary" />
+                    )}
+                  </button>
+                  
+                  <div className="flex-1 flex items-center gap-2">
+                    <div
+                      className="flex-1 h-1.5 bg-muted dark:bg-muted/50 rounded-full cursor-pointer group relative"
+                    >
+                      <div
+                        className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all group-hover:bg-primary/90"
+                        style={{ 
+                          width: questionTime.total 
+                            ? `${(questionTime.current / questionTime.total) * 100}%` 
+                            : '0%' 
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs tabular-nums text-muted-foreground min-w-[40px]">
+                      {questionTime.total 
+                        ? `${formatTime(questionTime.current)} / ${formatTime(questionTime.total)}` 
+                        : '0:00'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Interactive Tags */}
@@ -1211,14 +1339,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                   )}
                                   {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
                                     <button
-                                      onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
-                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
-                                    >
-                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
-                                    </button>
-                                  )}
-                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
-                                    <button
                                       onClick={async (e) => {
                                         e.stopPropagation();
                                         await supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1236,6 +1356,14 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       <MessageCircle className="h-4 w-4" />
                                     </button>
                                   )}
+                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
+                                    <button
+                                      onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
+                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
+                                    >
+                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
+                                    </button>
+                                  )}
                                 </h4>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                   {formatDistanceToNow(new Date(answer.created_at), {
@@ -1249,6 +1377,46 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                           <p className="text-sm text-gray-700 dark:text-gray-300">
                             {answer.content}
                           </p>
+                          {answer.audio_url && (
+                            <div className="mt-4 flex flex-col gap-2">
+                              <div className="flex items-center gap-2 px-3 py-2 bg-card dark:bg-card/80 border border-border rounded-lg shadow-sm">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleAnswerAudio(answer.id, answer.audio_url);
+                                  }}
+                                  className="p-2 rounded-full hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+                                >
+                                  {playingAnswers[answer.id] ? (
+                                    <Pause className="h-4 w-4 text-primary" />
+                                  ) : (
+                                    <Play className="h-4 w-4 text-primary" />
+                                  )}
+                                </button>
+                                
+                                <div className="flex-1 flex items-center gap-2">
+                                  <div
+                                    className="flex-1 h-1.5 bg-muted dark:bg-muted/50 rounded-full cursor-pointer group relative"
+                                  >
+                                    <div
+                                      className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all group-hover:bg-primary/90"
+                                      style={{ 
+                                        width: answerTimes[answer.id] 
+                                          ? `${(answerTimes[answer.id].current / answerTimes[answer.id].total) * 100}%` 
+                                          : '0%' 
+                                      }}
+                                    />
+                                  </div>
+                                  <span className="text-xs tabular-nums text-muted-foreground min-w-[40px]">
+                                    {answerTimes[answer.id] 
+                                      ? `${formatTime(answerTimes[answer.id].current)} / ${formatTime(answerTimes[answer.id].total)}` 
+                                      : '0:00'
+                                    }
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                       
@@ -1300,8 +1468,73 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                         onChange={(e) => setAnswer(e.target.value)}
                         placeholder="Digite sua resposta..."
                         maxLength={127}
-                        className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-sm focus:outline-none resize-none min-h-[80px] pr-10"
+                        className="w-full bg-transparent text-gray-800 dark:text-gray-200 text-sm focus:outline-none resize-none min-h-[80px] pr-24"
                       />
+                      <div className="absolute right-2 top-2 flex items-center gap-2">
+                        {!isRecording && !audioUrl && (
+                          <button
+                            type="button"
+                            onClick={startRecording}
+                            className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                          >
+                            <Mic className="h-4 w-4" />
+                          </button>
+                        )}
+
+                        {isRecording && (
+                          <button
+                            type="button"
+                            onClick={stopRecording}
+                            className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                          >
+                            <Pause className="h-4 w-4" />
+                          </button>
+                        )}
+                        {audioUrl && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (isPlaying) {
+                                  audioRef.current?.pause();
+                                } else {
+                                  if (audioRef.current) {
+                                    audioRef.current.play();
+                                  } else {
+                                    const audio = new Audio(audioUrl);
+                                    audio.onended = () => setIsPlaying(false);
+                                    audioRef.current = audio;
+                                    audio.play();
+                                  }
+                                }
+                                setIsPlaying(!isPlaying);
+                              }}
+                              className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200"
+                              title={isPlaying ? "Pausar áudio" : "Reproduzir áudio"}
+                            >
+                              {isPlaying ? (
+                                <Pause className="h-4 w-4" />
+                              ) : (
+                                <Play className="h-4 w-4" />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (audioRef.current) {
+                                  audioRef.current.pause();
+                                  setIsPlaying(false);
+                                }
+                                setAudioUrl(null);
+                              }}
+                              className="p-2 rounded-full bg-red-100 text-red-600 hover:bg-red-200"
+                              title="Excluir áudio"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-blue-900/30">
                       <div className="text-xs text-gray-400 dark:text-gray-500">
@@ -1309,7 +1542,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                       </div>
                       <button
                         type="submit"
-                        disabled={!answer.trim() || answer.trim().length === 127}
+                        disabled={!answer.trim() && !audioUrl}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <Send className="h-4 w-4" />
