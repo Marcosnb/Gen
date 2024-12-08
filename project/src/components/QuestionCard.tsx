@@ -1211,6 +1211,14 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                   )}
                                   {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
                                     <button
+                                      onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
+                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
+                                    >
+                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
+                                    </button>
+                                  )}
+                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
+                                    <button
                                       onClick={async (e) => {
                                         e.stopPropagation();
                                         await supabase.auth.getSession().then(({ data: { session } }) => {
@@ -1226,14 +1234,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       title="Enviar mensagem"
                                     >
                                       <MessageCircle className="h-4 w-4" />
-                                    </button>
-                                  )}
-                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
-                                    <button
-                                      onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
-                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
-                                    >
-                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
                                     </button>
                                   )}
                                 </h4>
