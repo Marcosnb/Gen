@@ -43,6 +43,21 @@ export function SignUp() {
     setLoading(true);
 
     try {
+      // Verificar se o nome já existe
+      const { data: existingUser, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('full_name', formData.name.trim())
+        .single();
+
+      if (existingUser) {
+        throw new Error('Já existe um usuário com este nome. Por favor, escolha outro nome.');
+      }
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
       // Validar entrada
       if (!validateInput(formData.email, 'email')) {
         throw new Error('Email inválido');

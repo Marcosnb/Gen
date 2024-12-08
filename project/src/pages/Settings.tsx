@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { Settings as SettingsIcon, Loader2, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { InsufficientCoinsAlert } from '../components/InsufficientCoinsAlert';
+import { TagInput } from '../components/TagInput';
+import { suggestedTags } from '../components/TagInput';
 
 interface Profile {
   id: string;
@@ -10,6 +12,8 @@ interface Profile {
   avatar_url: string;
   gender: string;
   email?: string;
+  age?: number;
+  interest?: string;
 }
 
 export function Settings() {
@@ -22,11 +26,14 @@ export function Settings() {
   const [currentAvatar, setCurrentAvatar] = useState<string>('');
   const [showInsufficientCoinsAlert, setShowInsufficientCoinsAlert] = useState(false);
   const [userCoins, setUserCoins] = useState(0);
+  const [selectedTags, setSelectedTags] = useState<typeof suggestedTags>([]);
 
   // Form state
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
+  const [age, setAge] = useState<number | undefined>();
+  const [interest, setInterest] = useState('');
 
   useEffect(() => {
     loadUserAndProfile();
@@ -54,6 +61,15 @@ export function Settings() {
         setProfile(profile);
         setFullName(profile.full_name || '');
         setGender(profile.gender || '');
+        setAge(profile.age || undefined);
+        
+        // Converter a string de interesses em tags
+        const interests = profile.interest ? profile.interest.split(',').map(i => i.trim()) : [];
+        const formattedTags = interests
+          .map(interest => suggestedTags.find(tag => tag.id === interest))
+          .filter((tag): tag is typeof suggestedTags[0] => tag !== undefined);
+        setSelectedTags(formattedTags);
+        
         setCurrentAvatar(profile.avatar_url || generateNewAvatar());
       }
     } catch (err) {
@@ -135,7 +151,9 @@ export function Settings() {
       const { error: profileError } = await supabase.rpc('update_user_profile', {
         p_full_name: fullName,
         p_avatar_url: currentAvatar,
-        p_gender: gender
+        p_gender: gender,
+        p_age: age,
+        p_interest: selectedTags.map(tag => tag.id).join(', ')
       });
 
       if (profileError) throw profileError;
@@ -302,6 +320,38 @@ export function Settings() {
                   </select>
                   <p className="text-xs text-muted-foreground">
                     Esta informação é opcional
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="age" className="text-sm font-medium">
+                    Idade
+                  </label>
+                  <input
+                    id="age"
+                    type="number"
+                    value={age || ''}
+                    onChange={(e) => setAge(e.target.value ? parseInt(e.target.value) : undefined)}
+                    min={13}
+                    max={100}
+                    className="w-full px-4 py-2.5 bg-background text-foreground border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Idade mínima: 13 anos
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="interest" className="text-sm font-medium">
+                    Interesses
+                  </label>
+                  <TagInput
+                    selectedTags={selectedTags}
+                    onChange={setSelectedTags}
+                    maxTags={5}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Selecione até 5 interesses
                   </p>
                 </div>
               </div>
