@@ -381,7 +381,7 @@ export function Header() {
                     aria-label={isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
                   >
                     {isDarkMode ? (
-                      <Moon className="h-5 w-5" />
+                      <Moon className="h-5 w-5 text-blue-500" />
                     ) : (
                       <Sun className="h-5 w-5 text-amber-500" />
                     )}

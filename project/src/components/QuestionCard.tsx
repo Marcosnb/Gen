@@ -1099,7 +1099,9 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
           {/* Stats Icons with Tooltips */}
           <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400">
             <div className="flex flex-col items-center group/stat relative">
-              <div className="relative w-1.5 h-12 bg-gray-200/30 dark:bg-gray-700/30 rounded-full overflow-hidden group-hover/stat:shadow-lg transition-all duration-300">
+              <div
+                className="relative w-1.5 h-12 bg-gray-200/30 dark:bg-gray-700/30 rounded-full overflow-hidden group-hover/stat:shadow-lg transition-all duration-300"
+              >
                 <div 
                   className={`absolute bottom-0 w-full rounded-full transition-all duration-500 transform-gpu ${getIntensityStyle(currentAnswerCount)}`}
                   style={{ 
@@ -1155,7 +1157,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                           Excluir pergunta
                         </button>
                       )}
-                      {session?.user?.id && session?.user?.id !== question.user_id && question.user_id && (
+                      {session?.user && session?.user?.id !== question.user_id && question.user_id && (
                         <button
                           onClick={handleFollow}
                           className={`text-xs ${isFollowing ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
@@ -1326,15 +1328,12 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                               <div>
                                 <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                                   {answer.profiles?.full_name || 'Usuário'}
-                                  {(isAdmin || session?.user?.id === answer.user_id) && (
+                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
                                     <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDeleteAnswer(answer.id);
-                                      }}
-                                      className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
+                                      onClick={handleFollowAnswerUser}
+                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
                                     >
-                                      Excluir resposta
+                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
                                     </button>
                                   )}
                                   {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
@@ -1356,12 +1355,15 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                       <MessageCircle className="h-4 w-4" />
                                     </button>
                                   )}
-                                  {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
+                                  {(isAdmin || session?.user?.id === answer.user_id) && (
                                     <button
-                                      onClick={(e) => handleFollowAnswerUser(answer.user_id, e)}
-                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteAnswer(answer.id);
+                                      }}
+                                      className="text-xs text-blue-500 hover:text-blue-700 transition-colors"
                                     >
-                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
+                                      Excluir resposta
                                     </button>
                                   )}
                                 </h4>
