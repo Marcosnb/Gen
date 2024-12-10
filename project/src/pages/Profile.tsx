@@ -15,6 +15,7 @@ import {
   FileQuestion,
   ChevronRight
 } from 'lucide-react';
+import { InsufficientCoinsAlert } from '../components/InsufficientCoinsAlert';
 
 interface UserStats {
   questions_count: number;
@@ -43,6 +44,8 @@ export function Profile() {
   const [activeTab, setActiveTab] = useState<TabType>('questions');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [showInsufficientCoinsModal, setShowInsufficientCoinsModal] = useState(false);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
     // Verificar se o usuário está logado
@@ -173,21 +176,38 @@ export function Profile() {
   const handleDeleteQuestion = async (questionId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Evita que o clique propague para o card
     
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', questionId)
-        .eq('user_id', user?.id); // Garante que apenas o próprio usuário pode deletar
+    if (points >= 5) {
+      try {
+        // Excluir a pergunta
+        const { error: deleteError } = await supabase
+          .from('questions')
+          .delete()
+          .eq('id', questionId)
+          .eq('user_id', user?.id);
 
-      if (error) throw error;
+        if (deleteError) throw deleteError;
 
-      // Atualiza a lista de perguntas localmente
-      setQuestions(prevQuestions => 
-        prevQuestions.filter(q => q.id !== questionId)
-      );
-    } catch (error) {
-      console.error('Erro ao deletar pergunta:', error);
+        // Descontar 5 moedas do usuário
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ points: points - 5 })
+          .eq('id', user?.id);
+
+        if (updateError) throw updateError;
+
+        // Atualizar o estado local das moedas
+        setPoints(points - 5);
+
+        // Atualiza a lista de perguntas localmente
+        setQuestions(prevQuestions => 
+          prevQuestions.filter(q => q.id !== questionId)
+        );
+      } catch (error) {
+        console.error('Erro ao deletar pergunta:', error);
+      }
+    } else {
+      setSelectedQuestionId(questionId);
+      setShowInsufficientCoinsModal(true);
     }
   };
 
@@ -238,9 +258,7 @@ export function Profile() {
                 {/* Estatísticas de Seguidores */}
                 <div className="flex items-center justify-center sm:justify-start gap-6 mt-4">
                   <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
-                    <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                      {followingCount}
-                    </span>
+                    <span className="text-lg font-bold text-foreground">{followingCount}</span>
                     <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
                       seguindo
                     </span>
@@ -249,9 +267,7 @@ export function Profile() {
                   <div className="h-8 w-px bg-border/60" />
                   
                   <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
-                    <span className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                      {followerCount}
-                    </span>
+                    <span className="text-lg font-bold text-foreground">{followerCount}</span>
                     <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
                       {followerCount === 1 ? 'seguidor' : 'seguidores'}
                     </span>
@@ -500,6 +516,16 @@ export function Profile() {
           )}
         </div>
       </div>
+      {showInsufficientCoinsModal && (
+        <InsufficientCoinsAlert
+          requiredCoins={5}
+          currentCoins={points}
+          onClose={() => {
+            setShowInsufficientCoinsModal(false);
+            setSelectedQuestionId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

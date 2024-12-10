@@ -637,8 +637,23 @@ export const suggestedTags = [
   id: 'vegano',
   label: 'Vegano',
   description: 'Alimentação e estilo de vida sem produtos de origem animal'
-  }
-   ];
+  },
+  {
+  id: 'lanche',
+  label: 'Lanche',
+  description: 'Fast food, lanches rápidos e comidas práticas'
+},
+{
+  id: 'hobby',
+  label: 'Hobby',
+  description: 'Passatempos, atividades recreativas e interesses pessoais'
+},
+{
+  id: 'desenho',
+  label: 'Desenho',
+  description: 'Arte, ilustração e técnicas de desenho'
+}
+];
 
 interface Tag {
   id: string;
