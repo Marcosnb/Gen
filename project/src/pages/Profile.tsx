@@ -450,47 +450,47 @@ export function Profile() {
           {/* Aba de Moedas */}
           {activeTab === 'coins' && (
             <div className="space-y-4">
-              <div className="bg-card rounded-xl border border-yellow-500/30 shadow-sm overflow-hidden">
-                <div className="p-4 sm:p-6 relative">
-                  {/* Efeito de gradiente sutil */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-amber-500/5" />
+              <div className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
+                <div className="p-4 sm:p-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Suas Moedas</h3>
                   
-                  <div className="relative flex flex-col gap-6">
-                    {/* Contador de Moedas */}
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-md">
-                          <Coins className="h-7 w-7 text-white" />
-                        </div>
+                  <div className="space-y-6">
+                    {/* Total de Moedas */}
+                    <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                      <div className="p-3 bg-primary/10 rounded-lg">
+                        <Coins className="w-6 h-6 text-primary" />
                       </div>
-                      
                       <div>
-                        <h3 className="text-base font-semibold text-yellow-700/90">Suas Moedas</h3>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-bold text-yellow-600">
-                            {points}
-                          </span>
-                          <span className="text-sm text-yellow-600/80">moedas</span>
-                        </div>
+                        <p className="text-sm text-muted-foreground">Total de moedas</p>
+                        <p className="text-2xl font-bold text-foreground">{points}</p>
                       </div>
                     </div>
 
-                    {/* Dicas */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-yellow-700">Como ganhar mais moedas:</h4>
-                      <div className="grid gap-2">
-                        {[
-                          { icon: <MessageCircle className="h-4 w-4" />, text: 'Faça perguntas interessantes' },
-                          { icon: <MessageCircle className="h-4 w-4" />, text: 'Responda outras pessoas' },
-                          { icon: <ThumbsUp className="h-4 w-4" />, text: 'Receba curtidas da comunidade' }
-                        ].map((tip, i) => (
-                          <div key={i} className="flex items-center gap-3 text-sm text-yellow-600/90">
-                            <div className="p-1.5 bg-yellow-500/10 rounded-lg">
-                              {tip.icon}
-                            </div>
-                            <span>{tip.text}</span>
+                    {/* Como Ganhar Moedas */}
+                    <div>
+                      <h4 className="text-sm font-medium text-foreground mb-3">Como ganhar moedas</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                          <MessageCircle className="w-5 h-5 text-primary mt-0.5" />
+                          <div>
+                            <p className="font-medium text-foreground">Responda outras pessoas</p>
+                            <p className="text-sm text-muted-foreground">Ganhe 7 moedas por resposta</p>
                           </div>
-                        ))}
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                          <ThumbsUp className="w-5 h-5 text-primary mt-0.5" />
+                          <div>
+                            <p className="font-medium text-foreground">Receba curtidas da comunidade</p>
+                            <p className="text-sm text-muted-foreground">Ganhe 10 moedas por curtida</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                          <HelpCircle className="w-5 h-5 text-primary mt-0.5" />
+                          <div>
+                            <p className="font-medium text-foreground">Faça perguntas interessantes</p>
+                            <p className="text-sm text-muted-foreground">Ganhe 5 moedas por pergunta</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
