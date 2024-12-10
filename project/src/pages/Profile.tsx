@@ -263,37 +263,39 @@ export function Profile() {
         </div>
 
         {/* Navegação em Abas */}
-        <div className="flex overflow-x-auto scrollbar-none -mx-4 sm:mx-0 px-4 sm:px-0 gap-2">
-          <button
-            onClick={() => setActiveTab('questions')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap
-              ${activeTab === 'questions' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
-          >
-            <FileQuestion className="h-4 w-4" />
-            Perguntas
-          </button>
-          <button
-            onClick={() => setActiveTab('stats')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap
-              ${activeTab === 'stats' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
-          >
-            <BarChart2 className="h-4 w-4" />
-            Estatísticas
-          </button>
-          <button
-            onClick={() => setActiveTab('coins')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors whitespace-nowrap
-              ${activeTab === 'coins' 
-                ? 'bg-primary text-primary-foreground' 
-                : 'hover:bg-muted text-muted-foreground hover:text-foreground'}`}
-          >
-            <Coins className="h-4 w-4" />
-            Moedas
-          </button>
+        <div className="border-b border-border/40">
+          <div className="flex sm:justify-start justify-center -mb-px space-x-8">
+            <button
+              onClick={() => setActiveTab('questions')}
+              className={`pb-4 px-1 border-b-2 transition-colors ${
+                activeTab === 'questions'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Perguntas
+            </button>
+            <button
+              onClick={() => setActiveTab('stats')}
+              className={`pb-4 px-1 border-b-2 transition-colors ${
+                activeTab === 'stats'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Estatísticas
+            </button>
+            <button
+              onClick={() => setActiveTab('coins')}
+              className={`pb-4 px-1 border-b-2 transition-colors ${
+                activeTab === 'coins'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+              }`}
+            >
+              Moedas
+            </button>
+          </div>
         </div>
 
         {/* Conteúdo das Abas */}
