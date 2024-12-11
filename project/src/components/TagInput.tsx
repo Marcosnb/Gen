@@ -652,6 +652,16 @@ export const suggestedTags = [
   id: 'desenho',
   label: 'Desenho',
   description: 'Arte, ilustração e técnicas de desenho'
+},
+{
+  id: 'sorvete',
+  label: 'Sorvete',
+  description: 'Sobremesas geladas, sabores e receitas de sorvete'
+},
+{
+  id: 'aventura',
+  label: 'Aventura',
+  description: 'Experiências emocionantes, viagens e desafios'
 }
 ];
 

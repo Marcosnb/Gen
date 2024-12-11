@@ -829,7 +829,7 @@ export function Messages() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">{selectedContact.full_name}</h3>
-                      <p className="text-sm text-muted-foreground">Clique para ver o perfil</p>
+                      <p className="text-sm text-muted-foreground">Você está conversando com: {selectedContact.full_name}</p>
                     </div>
                   </div>
                 </div>

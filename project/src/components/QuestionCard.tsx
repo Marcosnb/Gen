@@ -45,6 +45,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isAnswerAnonymous, setIsAnswerAnonymous] = useState(false);
   const [followingAnswerUsers, setFollowingAnswerUsers] = useState<{ [key: string]: boolean }>({});
+  const [answersFollowStatus, setAnswersFollowStatus] = useState<{ [key: string]: boolean }>({});
   const [currentAnswerCount, setCurrentAnswerCount] = useState(question.answer_count || 0);
 
   // Estados do player de áudio
@@ -316,23 +317,75 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user?.id) return;
 
-      const userIds = answers.map(answer => answer.user_id).filter(Boolean);
-      if (userIds.length === 0) return;
+      const followStatusMap: { [key: string]: boolean } = {};
 
-      const { data: followers } = await supabase
-        .from('followers')
-        .select('following_id')
-        .eq('follower_id', session.user.id)
-        .in('following_id', userIds);
+      for (const answer of answers) {
+        if (answer.user_id) {
+          const { data: follower } = await supabase
+            .from('followers')
+            .select('*')
+            .eq('follower_id', session.user.id)
+            .eq('following_id', answer.user_id)
+            .single();
 
-      const followingMap: { [key: string]: boolean } = {};
-      followers?.forEach(f => {
-        followingMap[f.following_id] = true;
-      });
+          followStatusMap[answer.id] = !!follower;
+        }
+      }
 
-      setFollowingAnswerUsers(followingMap);
+      setAnswersFollowStatus(followStatusMap);
     } catch (error) {
       console.error('Erro ao verificar status de seguidor das respostas:', error);
+    }
+  };
+
+  const handleAnswerFollow = async (e: React.MouseEvent, answerId: string, answerUserId: string) => {
+    e.stopPropagation();
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        navigate('/login');
+        return;
+      }
+
+      if (session.user.id === answerUserId) {
+        alert('Você não pode seguir a si mesmo');
+        return;
+      }
+
+      const currentFollowingStatus = answersFollowStatus[answerId] || false;
+
+      if (currentFollowingStatus) {
+        // Unfollow
+        const { error } = await supabase
+          .from('followers')
+          .delete()
+          .eq('follower_id', session.user.id)
+          .eq('following_id', answerUserId);
+
+        if (error) throw error;
+        setAnswersFollowStatus(prev => ({
+          ...prev,
+          [answerId]: false
+        }));
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('followers')
+          .insert([{
+            follower_id: session.user.id,
+            following_id: answerUserId,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        setAnswersFollowStatus(prev => ({
+          ...prev,
+          [answerId]: true
+        }));
+      }
+    } catch (error) {
+      console.error('Erro ao seguir/deixar de seguir:', error);
+      alert('Erro ao processar sua solicitação');
     }
   };
 
@@ -1309,11 +1362,11 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                         <div className="sticky top-0 z-10 bg-gradient-to-b from-white dark:from-[#080C16] to-transparent h-8 w-full" />
                       )}
                       
-                      {visibleAnswers.map((answer, index) => (
+                      {answers.slice(startIndex, startIndex + visibleCount).map((answer) => (
                         <div 
                           key={answer.id} 
                           className={`bg-gray-50 dark:bg-[#080C16] rounded-xl p-4 space-y-3 transition-all duration-300 border border-transparent dark:border-blue-900/30 ${
-                            index === visibleAnswers.length - 1 ? 'animate-pulse-once' : ''
+                            startIndex + visibleCount === answers.length ? 'animate-pulse-once' : ''
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -1331,10 +1384,10 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
                                   {answer.profiles?.full_name || 'Usuário'}
                                   {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
                                     <button
-                                      onClick={handleFollowAnswerUser}
-                                      className={`text-xs ${followingAnswerUsers[answer.user_id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
+                                      onClick={(e) => handleAnswerFollow(e, answer.id, answer.user_id)}
+                                      className={`text-xs ${answersFollowStatus[answer.id] ? 'text-emerald-700' : 'text-emerald-500'} hover:text-emerald-700 transition-colors`}
                                     >
-                                      {followingAnswerUsers[answer.user_id] ? 'Seguindo' : 'Seguir'}
+                                      {answersFollowStatus[answer.id] ? 'Seguindo' : 'Seguir'}
                                     </button>
                                   )}
                                   {session?.user && session?.user?.id !== answer.user_id && answer.user_id && (
