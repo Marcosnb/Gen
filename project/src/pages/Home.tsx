@@ -54,28 +54,25 @@ export function Home() {
 
         const followingIds = followingData?.map(follow => follow.following_id) || [];
 
-        // Mostra perguntas públicas OU perguntas onde o usuário é seguidor OU é o autor
-        query = query.or(`is_followers_only.eq.false,and(is_followers_only.eq.true,user_id.in.(${followingIds.join(',')})),user_id.eq.${user.id}`);
+        if (selectedFilter === 'following') {
+          // Na aba Seguindo, primeiro filtra por seguidores
+          if (followingIds && followingIds.length > 0) {
+            query = query.in('user_id', followingIds);
+            // Depois mostra perguntas públicas E privadas dos seguidores
+            query = query.or('is_followers_only.eq.false,is_followers_only.eq.true');
+          } else {
+            // Se não estiver seguindo ninguém, retornar array vazio
+            setQuestions([]);
+            setLoading(false);
+            return;
+          }
+        } else {
+          // Nas outras abas, mostra perguntas públicas OU perguntas privadas do próprio autor
+          query = query.or(`is_followers_only.eq.false,and(is_followers_only.eq.true,user_id.eq.${user.id})`);
+        }
       } else {
         // Se não estiver logado, mostra apenas perguntas públicas
         query = query.eq('is_followers_only', false);
-      }
-
-      // Se o filtro for 'following' e o usuário estiver logado, buscar apenas perguntas de pessoas que o usuário segue
-      if (selectedFilter === 'following' && user) {
-        const { data: followingIds } = await supabase
-          .from('followers')
-          .select('following_id')
-          .eq('follower_id', user.id);
-
-        if (followingIds && followingIds.length > 0) {
-          query = query.in('user_id', followingIds.map(f => f.following_id));
-        } else {
-          // Se não estiver seguindo ninguém, retornar array vazio
-          setQuestions([]);
-          setLoading(false);
-          return;
-        }
       }
 
       const { data: questionsData, error: questionsError } = await query;
