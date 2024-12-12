@@ -662,6 +662,21 @@ export const suggestedTags = [
   id: 'aventura',
   label: 'Aventura',
   description: 'Experiências emocionantes, viagens e desafios'
+},
+{ 
+  id: 'chocolate', 
+  label: 'Chocolate',
+  description: 'Delícias e receitas com chocolate'
+},
+{ 
+  id: 'tendencia', 
+  label: 'Tendência',
+  description: 'Novidades, modas e tendências atuais'
+},
+{ 
+  id: 'aviao', 
+  label: 'Avião',
+  description: 'Viagens aéreas, aviação e experiências'
 }
 ];
 
