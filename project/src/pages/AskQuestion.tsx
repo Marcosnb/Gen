@@ -135,7 +135,7 @@ export function AskQuestion() {
         title: title.trim(),
         content: content.trim(),
         is_anonymous: isAnonymous,
-        is_followers_only: isFollowersOnly,
+        is_followers_only: isFollowersOnly && !isAnonymous,
         tags: tags.map(tag => tag.id),
         audio_url: audioUrl,
         created_at: new Date().toISOString(),
@@ -351,16 +351,21 @@ export function AskQuestion() {
                         type="checkbox"
                         id="anonymous"
                         checked={isAnonymous}
-                        onChange={(e) => setIsAnonymous(e.target.checked)}
+                        onChange={(e) => {
+                          setIsAnonymous(e.target.checked);
+                          if (e.target.checked) {
+                            setIsFollowersOnly(false);
+                          }
+                        }}
                         className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
-                        disabled={isLoading}
+                        disabled={isLoading || isFollowersOnly}
                       />
-                      <label htmlFor="anonymous" className="text-sm font-medium cursor-pointer">
+                      <label htmlFor="anonymous" className={`text-sm font-medium cursor-pointer ${isFollowersOnly ? 'text-muted-foreground' : ''}`}>
                         Postar anonimamente
                       </label>
                     </div>
                     {isAnonymous && (
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/20 text-amber-800 dark:text-amber-200 border border-amber-200/60 dark:border-amber-500/30 rounded-full shadow-sm backdrop-blur-sm animate-fadeIn transition-all duration-300 hover:shadow hover:border-amber-300/80 dark:hover:border-amber-500/50">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-500/20 dark:to-orange-500/20 text-amber-800 dark:text-amber-200 border border-amber-200/60 dark:border-amber-500/30 rounded-full shadow-sm backdrop-blur-sm animate-fadeIn transition-all duration-300">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-amber-500 dark:text-amber-400 flex-shrink-0">
                           <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
                         </svg>
@@ -384,18 +389,23 @@ export function AskQuestion() {
                     <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        id="followersOnly"
+                        id="followers-only"
                         checked={isFollowersOnly}
-                        onChange={(e) => setIsFollowersOnly(e.target.checked)}
+                        onChange={(e) => {
+                          setIsFollowersOnly(e.target.checked);
+                          if (e.target.checked) {
+                            setIsAnonymous(false);
+                          }
+                        }}
                         className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
                         disabled={isLoading || isAnonymous}
                       />
-                      <label htmlFor="followersOnly" className="text-sm font-medium cursor-pointer">
+                      <label htmlFor="followers-only" className={`text-sm font-medium cursor-pointer ${isAnonymous ? 'text-muted-foreground' : ''}`}>
                         Postar apenas para seguidores
                       </label>
                     </div>
                     {isFollowersOnly && (
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/20 dark:to-indigo-500/20 text-blue-800 dark:text-blue-200 border border-blue-200/60 dark:border-blue-500/30 rounded-full shadow-sm backdrop-blur-sm animate-fadeIn transition-all duration-300 hover:shadow hover:border-blue-300/80 dark:hover:border-blue-500/50">
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 text-[10px] sm:text-xs font-medium bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-500/20 dark:to-indigo-500/20 text-blue-800 dark:text-blue-200 border border-blue-200/60 dark:border-blue-500/30 rounded-full shadow-sm backdrop-blur-sm animate-fadeIn transition-all duration-300">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0">
                           <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
                           <path fillRule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />

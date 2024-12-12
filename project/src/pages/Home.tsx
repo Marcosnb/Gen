@@ -1,7 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Clock, Flame, TrendingUp, Plus, MessageCircle, Search, ArrowRight, Trash2, Users } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { QuestionCard } from '../components/QuestionCard';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
@@ -13,6 +13,192 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+
+  const fetchQuestions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let query = supabase
+        .from('questions')
+        .select(`
+          id,
+          title,
+          content,
+          created_at,
+          user_id,
+          tags,
+          views,
+          is_anonymous,
+          is_followers_only,
+          audio_url,
+          likes_count:question_likes(count),
+          answers_count:answers(count)
+        `);
+
+      // Filtra perguntas apenas para seguidores
+      if (user) {
+        const { data: followingData } = await supabase
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        const followingIds = followingData?.map(follow => follow.following_id) || [];
+
+        // Mostra perguntas públicas OU perguntas onde o usuário é seguidor OU é o autor
+        query = query.or(`is_followers_only.eq.false,and(is_followers_only.eq.true,user_id.in.(${followingIds.join(',')})),user_id.eq.${user.id}`);
+      } else {
+        // Se não estiver logado, mostra apenas perguntas públicas
+        query = query.eq('is_followers_only', false);
+      }
+
+      // Se o filtro for 'following' e o usuário estiver logado, buscar apenas perguntas de pessoas que o usuário segue
+      if (selectedFilter === 'following' && user) {
+        const { data: followingIds } = await supabase
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        if (followingIds && followingIds.length > 0) {
+          query = query.in('user_id', followingIds.map(f => f.following_id));
+        } else {
+          // Se não estiver seguindo ninguém, retornar array vazio
+          setQuestions([]);
+          setLoading(false);
+          return;
+        }
+      }
+
+      const { data: questionsData, error: questionsError } = await query;
+
+      if (questionsError) {
+        console.error('Erro Supabase:', questionsError);
+        throw questionsError;
+      }
+
+      // Buscar lista de seguidores uma única vez
+      let followingUserIds = new Set();
+      if (user) {
+        const { data: followingIds } = await supabase
+          .from('followers')
+          .select('following_id')
+          .eq('follower_id', user.id);
+
+        followingUserIds = new Set(followingIds?.map(f => f.following_id) || []);
+      }
+
+      // Filtrar perguntas apenas para seguidores
+      let filteredQuestionsData = questionsData;
+      if (user) {
+        // Filtrar perguntas que são apenas para seguidores onde o usuário não segue o autor
+        filteredQuestionsData = questionsData.filter(question => 
+          !question.is_followers_only || followingUserIds.has(question.user_id) || question.user_id === user.id
+        );
+      } else {
+        // Se não estiver logado, mostrar apenas perguntas públicas
+        filteredQuestionsData = questionsData.filter(question => !question.is_followers_only);
+      }
+
+      console.log('Dados recebidos - Perguntas:', filteredQuestionsData);
+
+      // Se tiver dados, buscar os perfis dos usuários
+      if (filteredQuestionsData && filteredQuestionsData.length > 0) {
+        // Filtrar user_ids não nulos
+        const userIds = [...new Set(filteredQuestionsData
+          .map(q => q.user_id)
+          .filter(id => id != null))];
+
+        console.log('IDs de usuários encontrados:', userIds);
+
+        // Buscar perfis apenas se houver IDs de usuários
+        let profilesMap = {};
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', userIds);
+
+          if (profilesError) {
+            console.error('Erro ao buscar perfis:', profilesError);
+          } else {
+            console.log('Dados recebidos - Perfis:', profilesData);
+            
+            // Mapear os perfis por ID para fácil acesso
+            profilesMap = (profilesData || []).reduce((acc, profile) => {
+              acc[profile.id] = profile;
+              return acc;
+            }, {});
+          }
+        }
+
+        // Combinar os dados
+        let filteredQuestions = filteredQuestionsData.map(question => {
+          const profile = question.user_id ? profilesMap[question.user_id] : null;
+          
+          return {
+            id: question.id,
+            title: question.title,
+            content: question.content,
+            user_id: question.user_id,
+            created_at: question.created_at,
+            tags: Array.isArray(question.tags) ? question.tags : [],
+            views: question.views || 0,
+            upvotes: question.likes_count?.[0]?.count || 0,
+            is_answered: question.is_answered || false,
+            answer_count: question.answers_count?.[0]?.count || 0,
+            audio_url: question.audio_url,
+            is_anonymous: question.is_anonymous || false,
+            is_followers_only: question.is_followers_only || false,
+            profiles: profile || {
+              id: question.user_id,
+              full_name: 'Usuário Anônimo',
+              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
+            }
+          };
+        });
+
+        console.log('Perguntas processadas:', filteredQuestions);
+
+        // Aplicar os filtros
+        switch (selectedFilter) {
+          case 'recent':
+            // Na aba recentes, mostrar todas as perguntas (incluindo apenas para seguidores se o usuário segue o autor)
+            filteredQuestions.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            break;
+          case 'following':
+            // Na aba seguindo, mostrar apenas perguntas de pessoas que o usuário segue
+            filteredQuestions = filteredQuestions.filter(question => 
+              followingUserIds.has(question.user_id)
+            ).sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+            break;
+          case 'top':
+            filteredQuestions.sort((a, b) => b.upvotes - a.upvotes);
+            break;
+          case 'trending':
+            filteredQuestions.sort((a, b) => b.answer_count - a.answer_count);
+            break;
+        }
+
+        setQuestions(filteredQuestions);
+      } else {
+        setQuestions([]);
+      }
+    } catch (err) {
+      console.error('Erro detalhado:', err);
+      setError('Erro ao carregar perguntas. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedFilter, user]);
+
+  // Recarregar perguntas quando o usuário mudar
+  useEffect(() => {
+    fetchQuestions();
+  }, [user, fetchQuestions]);
 
   useEffect(() => {
     fetchQuestions();
@@ -47,138 +233,7 @@ export function Home() {
     return () => {
       channel.unsubscribe();
     };
-  }, [selectedFilter]);
-
-  const fetchQuestions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      let query = supabase
-        .from('questions')
-        .select(`
-          id,
-          title,
-          content,
-          created_at,
-          user_id,
-          tags,
-          views,
-          is_anonymous,
-          audio_url,
-          likes_count:question_likes(count),
-          answers_count:answers(count)
-        `);
-
-      // Se o filtro for 'following' e o usuário estiver logado, buscar apenas perguntas de pessoas que o usuário segue
-      if (selectedFilter === 'following' && user) {
-        const { data: followingIds } = await supabase
-          .from('followers')
-          .select('following_id')
-          .eq('follower_id', user.id);
-
-        if (followingIds && followingIds.length > 0) {
-          query = query.in('user_id', followingIds.map(f => f.following_id));
-        } else {
-          // Se não estiver seguindo ninguém, retornar array vazio
-          setQuestions([]);
-          setLoading(false);
-          return;
-        }
-      }
-
-      const { data: questionsData, error: questionsError } = await query;
-
-      if (questionsError) {
-        console.error('Erro Supabase:', questionsError);
-        throw questionsError;
-      }
-
-      console.log('Dados recebidos - Perguntas:', questionsData);
-
-      // Se tiver dados, buscar os perfis dos usuários
-      if (questionsData && questionsData.length > 0) {
-        // Filtrar user_ids não nulos
-        const userIds = [...new Set(questionsData
-          .map(q => q.user_id)
-          .filter(id => id != null))];
-
-        console.log('IDs de usuários encontrados:', userIds);
-
-        // Buscar perfis apenas se houver IDs de usuários
-        let profilesMap = {};
-        if (userIds.length > 0) {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, full_name, avatar_url')
-            .in('id', userIds);
-
-          if (profilesError) {
-            console.error('Erro ao buscar perfis:', profilesError);
-          } else {
-            console.log('Dados recebidos - Perfis:', profilesData);
-            
-            // Mapear os perfis por ID para fácil acesso
-            profilesMap = (profilesData || []).reduce((acc, profile) => {
-              acc[profile.id] = profile;
-              return acc;
-            }, {});
-          }
-        }
-
-        // Combinar os dados
-        let filteredQuestions = questionsData.map(question => {
-          const profile = question.user_id ? profilesMap[question.user_id] : null;
-          
-          return {
-            id: question.id,
-            title: question.title,
-            content: question.content,
-            user_id: question.user_id,
-            created_at: question.created_at,
-            tags: Array.isArray(question.tags) ? question.tags : [],
-            views: question.views || 0,
-            upvotes: question.likes_count?.[0]?.count || 0,
-            is_answered: question.is_answered || false,
-            answer_count: question.answers_count?.[0]?.count || 0,
-            audio_url: question.audio_url,
-            is_anonymous: question.is_anonymous || false,
-            profiles: profile || {
-              id: question.user_id,
-              full_name: 'Usuário Anônimo',
-              avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous'
-            }
-          };
-        });
-
-        console.log('Perguntas processadas:', filteredQuestions);
-
-        // Aplicar os filtros
-        switch (selectedFilter) {
-          case 'recent':
-            filteredQuestions.sort((a, b) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            );
-            break;
-          case 'top':
-            filteredQuestions.sort((a, b) => b.upvotes - a.upvotes);
-            break;
-          case 'trending':
-            filteredQuestions.sort((a, b) => b.answer_count - a.answer_count);
-            break;
-        }
-
-        setQuestions(filteredQuestions);
-      } else {
-        setQuestions([]);
-      }
-    } catch (err) {
-      console.error('Erro detalhado:', err);
-      setError('Erro ao carregar perguntas. Tente novamente mais tarde.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [selectedFilter, user]);
 
   // Função para deletar uma resposta
   const handleDeleteResponse = async (responseId: number) => {

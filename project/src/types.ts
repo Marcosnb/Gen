@@ -36,6 +36,7 @@ interface Question {
   answer_count: number;
   audio_url?: string;
   is_anonymous?: boolean;
+  is_followers_only?: boolean;
   profiles: {
     id: string;
     full_name: string;
