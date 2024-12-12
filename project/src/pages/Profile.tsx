@@ -13,7 +13,8 @@ import {
   Coins,
   BarChart2,
   FileQuestion,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react';
 import { InsufficientCoinsAlert } from '../components/InsufficientCoinsAlert';
 
@@ -46,6 +47,7 @@ export function Profile() {
   const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [showInsufficientCoinsModal, setShowInsufficientCoinsModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     // Verificar se o usuário está logado
@@ -245,33 +247,35 @@ export function Profile() {
                     </p>
                   </div>
 
-                  {/* Botão de Configurações */}
-                  <Link 
-                    to="/configuracoes"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors text-sm w-full sm:w-auto"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Editar Perfil
-                  </Link>
-                </div>
+                  {/* Botões de ação */}
+                  <div className="flex gap-2">
+                    <Link 
+                      to="/configuracoes"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors text-sm"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Editar Perfil
+                    </Link>
+                  </div>
 
-                {/* Estatísticas de Seguidores */}
-                <div className="flex items-center justify-center sm:justify-start gap-6 mt-4">
-                  <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
-                    <span className="text-lg font-bold text-foreground">{followingCount}</span>
-                    <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
-                      seguindo
-                    </span>
-                  </button>
-                  
-                  <div className="h-8 w-px bg-border/60" />
-                  
-                  <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
-                    <span className="text-lg font-bold text-foreground">{followerCount}</span>
-                    <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
-                      {followerCount === 1 ? 'seguidor' : 'seguidores'}
-                    </span>
-                  </button>
+                  {/* Estatísticas de Seguidores */}
+                  <div className="flex items-center justify-center sm:justify-start gap-6 mt-4">
+                    <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
+                      <span className="text-lg font-bold text-foreground">{followingCount}</span>
+                      <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
+                        seguindo
+                      </span>
+                    </button>
+                    
+                    <div className="h-8 w-px bg-border/60" />
+                    
+                    <button className="group flex flex-col items-center hover:bg-muted px-4 py-2 rounded-lg transition-colors">
+                      <span className="text-lg font-bold text-foreground">{followerCount}</span>
+                      <span className="text-sm text-muted-foreground group-hover:text-primary/80 transition-colors">
+                        {followerCount === 1 ? 'seguidor' : 'seguidores'}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -371,13 +375,6 @@ export function Profile() {
                       <div className="text-center py-8">
                         <FileQuestion className="h-12 w-12 text-muted-foreground/50 mx-auto mb-3" />
                         <p className="text-muted-foreground">Você ainda não fez nenhuma pergunta</p>
-                        <button
-                          onClick={() => navigate('/new-question')}
-                          className="mt-4 inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg transition-colors text-sm"
-                        >
-                          <FileQuestion className="h-4 w-4" />
-                          Fazer uma pergunta
-                        </button>
                       </div>
                     )}
                   </div>

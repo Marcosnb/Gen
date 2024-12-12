@@ -12,7 +12,16 @@ export function Home() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasNewQuestions, setHasNewQuestions] = useState(() => {
+    // Recupera o estado da bolinha do localStorage
+    return localStorage.getItem('hasNewFollowingQuestions') === 'true';
+  });
   const { user } = useAuth();
+
+  // Atualiza o localStorage sempre que hasNewQuestions mudar
+  useEffect(() => {
+    localStorage.setItem('hasNewFollowingQuestions', hasNewQuestions.toString());
+  }, [hasNewQuestions]);
 
   const fetchQuestions = useCallback(async () => {
     try {
@@ -221,8 +230,24 @@ export function Home() {
             setQuestions(prevQuestions => 
               prevQuestions.filter(q => q.id !== payload.old.id)
             );
+          } else if (payload.eventType === 'INSERT') {
+            // Verificar se a nova pergunta é de alguém que o usuário segue
+            if (user && selectedFilter !== 'following') {
+              const { data: followingData } = await supabase
+                .from('followers')
+                .select('following_id')
+                .eq('follower_id', user.id);
+
+              const followingIds = followingData?.map(follow => follow.following_id) || [];
+              const newQuestion = payload.new;
+
+              if (followingIds.includes(newQuestion.user_id) && newQuestion.is_followers_only) {
+                setHasNewQuestions(true);
+              }
+            }
+            await fetchQuestions();
           } else {
-            // Para INSERT e UPDATE, recarregar todas as perguntas
+            // Para UPDATE, apenas recarregar perguntas
             await fetchQuestions();
           }
         }
@@ -319,16 +344,26 @@ export function Home() {
                 </button>
                 {user && (
                   <button
-                    onClick={() => setSelectedFilter('following')}
+                    onClick={() => {
+                      if (selectedFilter !== 'following') {
+                        setSelectedFilter('following');
+                        setHasNewQuestions(false); 
+                      }
+                    }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                       selectedFilter === 'following'
                         ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                     }`}
                   >
-                    <Users className={`h-4 w-4 transition-transform duration-300 ${
-                      selectedFilter === 'following' ? 'scale-110' : ''
-                    }`} />
+                    <div className="relative">
+                      <Users className={`h-4 w-4 transition-transform duration-300 ${
+                        selectedFilter === 'following' ? 'scale-110' : ''
+                      }`} />
+                      {hasNewQuestions && selectedFilter !== 'following' && (
+                        <span className="absolute top-1/2 -translate-y-1/2 -left-3 h-2 w-2 bg-red-500 rounded-full" />
+                      )}
+                    </div>
                     <span>Seguindo</span>
                   </button>
                 )}
