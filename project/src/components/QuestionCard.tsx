@@ -1,6 +1,6 @@
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Flame, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper, Volume2, Play, Pause, Mic, IceCream, Compass, Cookie, TrendingUp } from 'lucide-react';
+import { MessageCircle, Eye, ChevronDown, Send, Tag, ArrowBigUp, Trash2, Code, Book, Lightbulb, HelpCircle, Wrench, Laptop, Globe, Database, Shield, Cpu, PenTool, Zap, FileCode, Settings, Users, Cloud, Smartphone, Film, Music, Gamepad, Camera, Radio, Tv, Theater, Popcorn, Heart, Star, Coffee, Wallet, Briefcase, Scale, Leaf, Microscope, Building2, Languages, Brush, FlowerIcon as Flower, UtensilsCrossed, Brain, Shirt, Sparkles, Smile, Calendar, Umbrella, GraduationCap, Dumbbell, Wine, School, Coins, ShoppingBag, Map, Church, Plane, Palette, Clapperboard, CrossIcon as Cross, Footprints, Sun, Store, ShoppingCart, Building, GanttChart, Bus, Pizza, Crown, Bike, Drumstick, CircuitBoard, Rocket, LineChart, Presentation, Telescope, Atom, TestTube, Dna, Stethoscope, Apple, Medal, PersonStanding, Target, BarChart, Bot, Network, PartyPopper, Volume2, Play, Pause, Mic, IceCream, Compass, Cookie, TrendingUp, Flame } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Question } from '../types';
@@ -1071,17 +1071,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
     }
   };
 
-  // Função para determinar o estilo da barra baseado no número de respostas
-  const getIntensityStyle = (respostas: number) => {
-    // Verde -> Laranja -> Vermelho com novos níveis
-    if (respostas >= 27) return 'h-full bg-gradient-to-t from-red-600 via-red-500 to-red-400 scale-100';
-    if (respostas >= 16) return 'h-4/5 bg-gradient-to-t from-orange-600 via-orange-500 to-orange-400 scale-95';
-    if (respostas >= 10) return 'h-3/5 bg-gradient-to-t from-yellow-500 via-yellow-400 to-yellow-300 scale-90';
-    if (respostas >= 8) return 'h-2/5 bg-gradient-to-t from-lime-600 via-lime-500 to-lime-400 scale-85';
-    if (respostas >= 5) return 'h-1/5 bg-gradient-to-t from-green-600 via-green-500 to-green-400 scale-80';
-    return 'h-1/5 bg-gray-200 dark:bg-gray-700 scale-75 opacity-30'; // Sem cor para 0-3 respostas
-  };
-
   // Função para controlar o áudio da pergunta
   const toggleQuestionAudio = (audioUrl: string) => {
     if (questionAudioRef.current) {
@@ -1157,26 +1146,6 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
 
           {/* Stats Icons with Tooltips */}
           <div className="flex flex-col items-center gap-4 text-gray-500 dark:text-gray-400">
-            <div className="flex flex-col items-center group/stat relative">
-              <div
-                className="relative w-1.5 h-12 bg-gray-200/30 dark:bg-gray-700/30 rounded-full overflow-hidden group-hover/stat:shadow-lg transition-all duration-300"
-              >
-                <div 
-                  className={`absolute bottom-0 w-full rounded-full transition-all duration-500 transform-gpu ${getIntensityStyle(currentAnswerCount)}`}
-                  style={{ 
-                    boxShadow: currentAnswerCount >= 4 ? '0 -2px 8px rgba(0,0,0,0.15)' : 'none',
-                    filter: currentAnswerCount >= 4 ? 'brightness(1.2) saturate(1.2)' : 'none'
-                  }}
-                />
-                {/* Efeito de brilho na borda apenas para respostas >= 4 */}
-                {currentAnswerCount >= 4 && (
-                  <div className="absolute inset-0 rounded-full bg-gradient-to-t from-white/10 to-transparent opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300" />
-                )}
-              </div>
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-900/90 backdrop-blur-sm text-white text-xs rounded-lg opacity-0 group-hover/stat:opacity-100 transition-opacity duration-300 whitespace-nowrap shadow-lg">
-                Intensidade de respostas
-              </span>
-            </div>
           </div>
         </div>
 
@@ -1203,7 +1172,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
               <div>
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300 flex items-center gap-2">
                       {question.profiles?.full_name || 'Usuário'}
                       {(isAdmin || session?.user?.id === question.user_id) && (
                         <button

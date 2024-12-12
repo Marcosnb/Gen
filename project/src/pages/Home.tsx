@@ -12,16 +12,15 @@ export function Home() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [hasNewQuestions, setHasNewQuestions] = useState(() => {
-    // Recupera o estado da bolinha do localStorage
-    return localStorage.getItem('hasNewFollowingQuestions') === 'true';
-  });
+  const [hasNewQuestions, setHasNewQuestions] = useState(true);
   const { user } = useAuth();
 
   // Atualiza o localStorage sempre que hasNewQuestions mudar
   useEffect(() => {
-    localStorage.setItem('hasNewFollowingQuestions', hasNewQuestions.toString());
-  }, [hasNewQuestions]);
+    if (selectedFilter === 'following') {
+      setHasNewQuestions(false);
+    }
+  }, [selectedFilter]);
 
   const fetchQuestions = useCallback(async () => {
     try {
@@ -181,7 +180,7 @@ export function Home() {
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
             break;
-          case 'top':
+          case 'hot':
             filteredQuestions.sort((a, b) => b.upvotes - a.upvotes);
             break;
           case 'trending':
@@ -314,15 +313,15 @@ export function Home() {
                   <span>Recentes</span>
                 </button>
                 <button
-                  onClick={() => setSelectedFilter('top')}
+                  onClick={() => setSelectedFilter('hot')}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
-                    selectedFilter === 'top'
+                    selectedFilter === 'hot'
                       ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   }`}
                 >
                   <Flame className={`h-4 w-4 transition-transform duration-300 ${
-                    selectedFilter === 'top' ? 'scale-110' : ''
+                    selectedFilter === 'hot' ? 'scale-110' : ''
                   }`} />
                   <span>Quentes</span>
                 </button>
@@ -342,10 +341,8 @@ export function Home() {
                 {user && (
                   <button
                     onClick={() => {
-                      if (selectedFilter !== 'following') {
-                        setSelectedFilter('following');
-                        setHasNewQuestions(false); 
-                      }
+                      setSelectedFilter('following');
+                      setHasNewQuestions(false);
                     }}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                       selectedFilter === 'following'
@@ -357,7 +354,7 @@ export function Home() {
                       <Users className={`h-4 w-4 transition-transform duration-300 ${
                         selectedFilter === 'following' ? 'scale-110' : ''
                       }`} />
-                      {hasNewQuestions && selectedFilter !== 'following' && (
+                      {hasNewQuestions && (
                         <span className="absolute top-1/2 -translate-y-1/2 -left-3 h-2 w-2 bg-red-500 rounded-full" />
                       )}
                     </div>
