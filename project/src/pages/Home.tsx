@@ -6,6 +6,7 @@ import { QuestionCard } from '../components/QuestionCard';
 import type { Question } from '../types';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { MobileAuthCard } from '../components/MobileAuthCard';
 
 export function Home() {
   const [selectedFilter, setSelectedFilter] = useState('recent');
@@ -14,6 +15,7 @@ export function Home() {
   const [error, setError] = useState<string | null>(null);
   const [hasNewQuestions, setHasNewQuestions] = useState(true);
   const { user } = useAuth();
+  const [showAuthCard, setShowAuthCard] = useState(false);
 
   // Atualiza o localStorage sempre que hasNewQuestions mudar
   useEffect(() => {
@@ -256,6 +258,19 @@ export function Home() {
     };
   }, [selectedFilter, user]);
 
+  // Controla a exibição do card de autenticação
+  useEffect(() => {
+    // Se não houver usuário, aguarda um pouco antes de mostrar o card
+    if (!user) {
+      const timer = setTimeout(() => {
+        setShowAuthCard(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowAuthCard(false);
+    }
+  }, [user]);
+
   // Função para deletar uma resposta
   const handleDeleteResponse = async (responseId: number) => {
     try {
@@ -281,6 +296,7 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-background">
+      {showAuthCard && !user && <MobileAuthCard />}
       <div className="container mx-auto px-4 pt-20 pb-8">
         {/* Header com Visual Hierarchy e Micro-interações */}
         <div className="relative max-w-5xl mx-auto">

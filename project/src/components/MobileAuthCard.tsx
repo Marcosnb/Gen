@@ -1,11 +1,22 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useState, useEffect } from 'react';
 
 export function MobileAuthCard() {
   const { user } = useAuth();
+  const [visible, setVisible] = useState(false);
 
-  // Se o usuário estiver logado, não mostra o card
-  if (user) return null;
+  useEffect(() => {
+    // Se não houver usuário, aguarda um pouco antes de mostrar o card
+    const timer = setTimeout(() => {
+      setVisible(!user);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [user]);
+
+  // Não mostra o card se houver usuário ou se ainda não passou o delay
+  if (user || !visible) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 p-4 md:hidden">
