@@ -39,19 +39,16 @@ export function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [points, setPoints] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [activeTab, setActiveTab] = useState<TabType>('questions');
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [loadingQuestions, setLoadingQuestions] = useState(false);
   const [showInsufficientCoinsModal, setShowInsufficientCoinsModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    // Verificar se o usuário está logado
-    const checkUser = async () => {
+    const loadUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -61,119 +58,81 @@ export function Profile() {
 
       setUser(session.user);
 
-      // Buscar estatísticas do usuário
-      const { data: answersCount, error: answersError } = await supabase
-        .from('answers')
-        .select('id', { count: 'exact' })
-        .eq('user_id', session.user.id);
-
-      const { data: questionsCount, error: questionsError } = await supabase
-        .from('questions')
-        .select('id', { count: 'exact' })
-        .eq('user_id', session.user.id);
-
-      // Buscar curtidas dadas pelo usuário
-      const { count: likesGiven } = await supabase
-        .from('question_likes')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', session.user.id);
-
-      // Buscar curtidas recebidas nas perguntas do usuário
-      const { count: likesReceived } = await supabase
-        .from('question_likes')
-        .select('*', { count: 'exact', head: true })
-        .in('question_id', questionsCount?.map(q => q.id) || []);
-
-      if (!answersError && !questionsError) {
-        setStats({
-          questions_count: questionsCount?.length || 0,
-          answers_count: answersCount?.length || 0,
-          likes_given_count: likesGiven || 0,
-          likes_received_count: likesReceived || 0
-        });
-      }
-
-      // Buscar pontos do usuário
-      const { data: userPoints, error: pointsError } = await supabase
-        .from('profiles')
-        .select('points')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!pointsError && userPoints) {
-        setPoints(userPoints.points || 0);
-      }
-
-      fetchFollowCounts();
-      setLoading(false);
+      // Carregar tudo em paralelo para melhor performance
+      await Promise.all([
+        loadStats(session.user.id),
+        loadPoints(session.user.id),
+        loadFollowCounts(session.user.id),
+        loadQuestions(session.user.id)
+      ]);
     };
 
-    checkUser();
+    loadUserData();
   }, [navigate]);
+
+  const loadStats = async (userId: string) => {
+    const [answersCount, questionsCount, likesGiven, likesReceived] = await Promise.all([
+      supabase.from('answers').select('id', { count: 'exact' }).eq('user_id', userId),
+      supabase.from('questions').select('id', { count: 'exact' }).eq('user_id', userId),
+      supabase.from('question_likes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+      supabase.from('question_likes').select('*', { count: 'exact', head: true })
+    ]);
+
+    setStats({
+      questions_count: questionsCount.data?.length || 0,
+      answers_count: answersCount.data?.length || 0,
+      likes_given_count: likesGiven.count || 0,
+      likes_received_count: likesReceived.count || 0
+    });
+  };
+
+  const loadPoints = async (userId: string) => {
+    const { data: userPoints } = await supabase
+      .from('profiles')
+      .select('points')
+      .eq('id', userId)
+      .single();
+    
+    setPoints(userPoints?.points || 0);
+  };
+
+  const loadFollowCounts = async (userId: string) => {
+    const [followers, following] = await Promise.all([
+      supabase.from('followers').select('*', { count: 'exact' }).eq('following_id', userId),
+      supabase.from('followers').select('*', { count: 'exact' }).eq('follower_id', userId)
+    ]);
+
+    setFollowerCount(followers.count || 0);
+    setFollowingCount(following.count || 0);
+  };
+
+  const loadQuestions = async (userId: string) => {
+    const { data } = await supabase
+      .from('questions')
+      .select(`
+        id,
+        title,
+        created_at,
+        answers:answers(count)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    const questionsWithCounts = data.map(q => ({
+      id: q.id,
+      title: q.title,
+      created_at: q.created_at,
+      answers_count: q.answers?.[0]?.count || 0
+    }));
+
+    setQuestions(questionsWithCounts);
+  };
 
   useEffect(() => {
     if (user && activeTab === 'questions') {
-      fetchUserQuestions();
+      loadQuestions(user.id);
     }
   }, [user, activeTab]);
-
-  const fetchUserQuestions = async () => {
-    if (!user) return;
-    
-    setLoadingQuestions(true);
-    try {
-      // Buscar perguntas do usuário com contagem de respostas
-      const { data, error } = await supabase
-        .from('questions')
-        .select(`
-          id,
-          title,
-          created_at,
-          answers:answers(count)
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      const questionsWithCounts = data.map(q => ({
-        id: q.id,
-        title: q.title,
-        created_at: q.created_at,
-        answers_count: q.answers?.[0]?.count || 0
-      }));
-
-      setQuestions(questionsWithCounts);
-    } catch (error) {
-      console.error('Erro ao buscar perguntas:', error);
-    } finally {
-      setLoadingQuestions(false);
-    }
-  };
-
-  const fetchFollowCounts = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.id) return;
-
-      // Get followers count
-      const { count: followers } = await supabase
-        .from('followers')
-        .select('*', { count: 'exact' })
-        .eq('following_id', session.user.id);
-
-      // Get following count
-      const { count: following } = await supabase
-        .from('followers')
-        .select('*', { count: 'exact' })
-        .eq('follower_id', session.user.id);
-
-      setFollowerCount(followers || 0);
-      setFollowingCount(following || 0);
-    } catch (error) {
-      console.error('Erro ao buscar contagem de seguidores:', error);
-    }
-  };
 
   const handleDeleteQuestion = async (questionId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Evita que o clique propague para o card
@@ -212,16 +171,6 @@ export function Profile() {
       setShowInsufficientCoinsModal(true);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background pt-16 sm:pt-20">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background pt-16 sm:pt-20">
@@ -329,11 +278,7 @@ export function Profile() {
                   
                   {/* Lista de Perguntas */}
                   <div className="space-y-3">
-                    {loadingQuestions ? (
-                      <div className="flex justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      </div>
-                    ) : questions.length > 0 ? (
+                    {questions.length > 0 ? (
                       <div className="grid gap-3">
                         {questions.map((question) => (
                           <div 

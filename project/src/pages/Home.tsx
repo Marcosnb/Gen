@@ -338,10 +338,13 @@ export function Home() {
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                     }`}
                   >
-                    <Users className={`h-4 w-4 transition-transform duration-300 ${
-                      selectedFilter === 'following' ? 'scale-110' : ''
-                    }`} />
-                    <span>Seguindo</span>
+                    <div className="relative flex items-center">
+                      <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-2 w-2 bg-red-500 rounded-full"></span>
+                      <Users className={`h-4 w-4 transition-transform duration-300 ${
+                        selectedFilter === 'following' ? 'scale-110' : ''
+                      }`} />
+                    </div>
+                    <span className={selectedFilter === 'following' ? 'text-primary-foreground' : 'text-muted-foreground'}>Seguindo</span>
                   </button>
                 )}
               </div>
