@@ -14,6 +14,7 @@ import { Messages } from './pages/Messages';
 import { SearchResults } from './pages/SearchResults';
 import { AuthProvider } from './contexts/AuthContext';
 import { SessionTimeoutProvider } from './contexts/SessionTimeoutContext';
+import { Toaster } from 'sonner';
 
 function App() {
   return (
@@ -35,9 +36,11 @@ function App() {
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/search" element={<SearchResults />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Routes>
               </div>
             </main>
+            <Toaster richColors position="top-right" />
             <TermsNotice />
           </div>
         </SessionTimeoutProvider>
