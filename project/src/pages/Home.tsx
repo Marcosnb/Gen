@@ -12,22 +12,11 @@ export function Home() {
   const [selectedFilter, setSelectedFilter] = useState('recent');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hasNewQuestions, setHasNewQuestions] = useState(true);
   const { user } = useAuth();
-  const [showAuthCard, setShowAuthCard] = useState(false);
-
-  // Atualiza o localStorage sempre que hasNewQuestions mudar
-  useEffect(() => {
-    if (selectedFilter === 'following') {
-      setHasNewQuestions(false);
-    }
-  }, [selectedFilter]);
 
   const fetchQuestions = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
 
       let query = supabase
         .from('questions')
@@ -196,7 +185,6 @@ export function Home() {
       }
     } catch (err) {
       console.error('Erro detalhado:', err);
-      setError('Erro ao carregar perguntas. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }
@@ -240,7 +228,7 @@ export function Home() {
               const newQuestion = payload.new;
 
               if (followingIds.includes(newQuestion.user_id) && newQuestion.is_followers_only) {
-                setHasNewQuestions(true);
+                fetchQuestions();
               }
             }
             await fetchQuestions();
@@ -257,19 +245,6 @@ export function Home() {
       channel.unsubscribe();
     };
   }, [selectedFilter, user]);
-
-  // Controla a exibição do card de autenticação
-  useEffect(() => {
-    // Se não houver usuário, aguarda um pouco antes de mostrar o card
-    if (!user) {
-      const timer = setTimeout(() => {
-        setShowAuthCard(true);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
-      setShowAuthCard(false);
-    }
-  }, [user]);
 
   // Função para deletar uma resposta
   const handleDeleteResponse = async (responseId: number) => {
@@ -296,7 +271,7 @@ export function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {showAuthCard && !user && <MobileAuthCard />}
+      <MobileAuthCard />
       <div className="container mx-auto px-4 pt-20 pb-8">
         {/* Header com Visual Hierarchy e Micro-interações */}
         <div className="relative max-w-5xl mx-auto">
@@ -356,24 +331,16 @@ export function Home() {
                 </button>
                 {user && (
                   <button
-                    onClick={() => {
-                      setSelectedFilter('following');
-                      setHasNewQuestions(false);
-                    }}
+                    onClick={() => setSelectedFilter('following')}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                       selectedFilter === 'following'
                         ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                     }`}
                   >
-                    <div className="relative">
-                      <Users className={`h-4 w-4 transition-transform duration-300 ${
-                        selectedFilter === 'following' ? 'scale-110' : ''
-                      }`} />
-                      {hasNewQuestions && (
-                        <span className="absolute top-1/2 -translate-y-1/2 -left-3 h-2 w-2 bg-red-500 rounded-full" />
-                      )}
-                    </div>
+                    <Users className={`h-4 w-4 transition-transform duration-300 ${
+                      selectedFilter === 'following' ? 'scale-110' : ''
+                    }`} />
                     <span>Seguindo</span>
                   </button>
                 )}
@@ -422,18 +389,6 @@ export function Home() {
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        ) : error ? (
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-destructive/10 text-destructive rounded-xl p-8 text-center border border-destructive/20">
-              <p className="text-lg font-medium">{error}</p>
-              <button
-                onClick={fetchQuestions}
-                className="mt-4 px-4 py-2 bg-destructive/20 hover:bg-destructive/30 text-destructive rounded-lg text-sm font-medium transition-colors"
-              >
-                Tentar novamente
-              </button>
             </div>
           </div>
         ) : questions.length === 0 ? (
