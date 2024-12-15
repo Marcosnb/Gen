@@ -334,12 +334,12 @@ export function Home() {
                     onClick={() => setSelectedFilter('following')}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                       selectedFilter === 'following'
-                        ? 'border border-primary text-primary shadow-sm scale-[1.02] pl-6'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 pl-6'
+                        ? 'border border-primary text-primary shadow-sm scale-[1.02] pl-5'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 pl-5'
                     }`}
                   >
                     <div className="relative flex items-center">
-                      <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-2 w-2 bg-red-500 rounded-full"></span>
+                      <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-1.5 w-1.5 md:h-2 md:w-2 bg-red-500 rounded-full animate-pulse"></span>
                       <Users className={`h-4 w-4 transition-transform duration-300 ${
                         selectedFilter === 'following' ? 'scale-110' : ''
                       }`} />
