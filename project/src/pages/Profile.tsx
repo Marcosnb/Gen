@@ -46,8 +46,23 @@ export function Profile() {
   const [showInsufficientCoinsModal, setShowInsufficientCoinsModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
+  // Adicionar aqui
+  const getLikesReceived = async (userId: string) => {
+  const { data: questions } = await supabase
+    .from('questions')
+    .select('id')
+    .eq('user_id', userId);
+  
+  if (!questions?.length) return 0;
+  
+  const { count } = await supabase
+    .from('question_likes')
+    .select('*', { count: 'exact' })
+    .in('question_id', questions.map(q => q.id));
+  
+  return count || 0;
+};
+useEffect(() => {
     const loadUserData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -69,24 +84,22 @@ export function Profile() {
 
     loadUserData();
   }, [navigate]);
+const loadStats = async (userId: string) => {
+  const [answersCount, questionsCount, likesGiven, likesReceived] = await Promise.all([
+    supabase.from('answers').select('id', { count: 'exact' }).eq('user_id', userId),
+    supabase.from('questions').select('id', { count: 'exact' }).eq('user_id', userId),
+    supabase.from('question_likes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
+    getLikesReceived(userId)
+  ]);
 
-  const loadStats = async (userId: string) => {
-    const [answersCount, questionsCount, likesGiven, likesReceived] = await Promise.all([
-      supabase.from('answers').select('id', { count: 'exact' }).eq('user_id', userId),
-      supabase.from('questions').select('id', { count: 'exact' }).eq('user_id', userId),
-      supabase.from('question_likes').select('*', { count: 'exact', head: true }).eq('user_id', userId),
-      supabase.from('question_likes').select('*', { count: 'exact', head: true })
-    ]);
-
-    setStats({
-      questions_count: questionsCount.data?.length || 0,
-      answers_count: answersCount.data?.length || 0,
-      likes_given_count: likesGiven.count || 0,
-      likes_received_count: likesReceived.count || 0
-    });
-  };
-
-  const loadPoints = async (userId: string) => {
+  setStats({
+    questions_count: questionsCount.data?.length || 0,
+    answers_count: answersCount.data?.length || 0,
+    likes_given_count: likesGiven.count || 0,
+    likes_received_count: likesReceived
+  });
+};
+const loadPoints = async (userId: string) => {
     const { data: userPoints } = await supabase
       .from('profiles')
       .select('points')
