@@ -292,10 +292,10 @@ export function Home() {
               <div className="flex items-center gap-2 bg-background/50 backdrop-blur-sm p-2 rounded-lg border border-border/50 shadow-sm">
                 <button
                   onClick={() => setSelectedFilter('recent')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
+                  className={`flex items-center gap-2 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                     selectedFilter === 'recent'
-                      ? 'border border-primary text-primary shadow-sm scale-[1.02]'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      ? 'border border-primary text-primary shadow-sm scale-[1.02] px-3'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3'
                   }`}
                 >
                   <Clock className={`h-4 w-4 transition-transform duration-300 ${
@@ -305,10 +305,10 @@ export function Home() {
                 </button>
                 <button
                   onClick={() => setSelectedFilter('hot')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
+                  className={`flex items-center gap-2 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                     selectedFilter === 'hot'
-                      ? 'border border-primary text-primary shadow-sm scale-[1.02]'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      ? 'border border-primary text-primary shadow-sm scale-[1.02] px-3'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3'
                   }`}
                 >
                   <Flame className={`h-4 w-4 transition-transform duration-300 ${
@@ -318,10 +318,10 @@ export function Home() {
                 </button>
                 <button
                   onClick={() => setSelectedFilter('trending')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
+                  className={`flex items-center gap-2 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                     selectedFilter === 'trending'
-                      ? 'border border-primary text-primary shadow-sm scale-[1.02]'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                      ? 'border border-primary text-primary shadow-sm scale-[1.02] px-3'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 px-3'
                   }`}
                 >
                   <TrendingUp className={`h-4 w-4 transition-transform duration-300 ${
