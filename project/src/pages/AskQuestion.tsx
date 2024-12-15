@@ -308,7 +308,7 @@ export function AskQuestion() {
                         <button
                           type="button"
                           onClick={playAudio}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-primary text-primary hover:bg-primary/5 rounded-lg transition-colors"
                         >
                           <Play className="h-4 w-4" />
                           <span>Reproduzir</span>
@@ -316,7 +316,7 @@ export function AskQuestion() {
                         <button
                           type="button"
                           onClick={deleteAudio}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-lg"
+                          className="inline-flex items-center gap-2 px-4 py-2 border border-destructive text-destructive hover:bg-destructive/5 rounded-lg transition-colors"
                         >
                           <Trash2 className="h-4 w-4" />
                           <span>Excluir</span>

@@ -103,7 +103,7 @@ export function TermsNotice() {
                 {/* Links */}
                 <div className="space-y-2">
                   <Link 
-                    to="/termos" 
+                    to="/terms" 
                     className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted transition-colors group"
                   >
                     <div className="flex items-center gap-2">
@@ -114,7 +114,7 @@ export function TermsNotice() {
                   </Link>
                   
                   <Link 
-                    to="/privacidade" 
+                    to="/privacy" 
                     className="flex items-center justify-between w-full p-2 rounded-lg hover:bg-muted transition-colors group"
                   >
                     <div className="flex items-center gap-2">
