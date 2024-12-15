@@ -294,7 +294,7 @@ export function Home() {
                   onClick={() => setSelectedFilter('recent')}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                     selectedFilter === 'recent'
-                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
+                      ? 'border border-primary text-primary shadow-sm scale-[1.02]'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   }`}
                 >
@@ -307,7 +307,7 @@ export function Home() {
                   onClick={() => setSelectedFilter('hot')}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                     selectedFilter === 'hot'
-                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
+                      ? 'border border-primary text-primary shadow-sm scale-[1.02]'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   }`}
                 >
@@ -320,7 +320,7 @@ export function Home() {
                   onClick={() => setSelectedFilter('trending')}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                     selectedFilter === 'trending'
-                      ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
+                      ? 'border border-primary text-primary shadow-sm scale-[1.02]'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
                   }`}
                 >
@@ -334,8 +334,8 @@ export function Home() {
                     onClick={() => setSelectedFilter('following')}
                     className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium whitespace-nowrap justify-center transition-all duration-300 ${
                       selectedFilter === 'following'
-                        ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-[1.02] ring-1 ring-primary/20'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                        ? 'border border-primary text-primary shadow-sm scale-[1.02] pl-6'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/60 pl-6'
                     }`}
                   >
                     <div className="relative flex items-center">
@@ -344,7 +344,7 @@ export function Home() {
                         selectedFilter === 'following' ? 'scale-110' : ''
                       }`} />
                     </div>
-                    <span className={selectedFilter === 'following' ? 'text-primary-foreground' : 'text-muted-foreground'}>Seguindo</span>
+                    <span className={selectedFilter === 'following' ? 'text-primary' : 'text-muted-foreground'}>Seguindo</span>
                   </button>
                 )}
               </div>
