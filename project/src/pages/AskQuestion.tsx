@@ -219,7 +219,13 @@ export function AskQuestion() {
                     type="text"
                     id="title"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      const newTitle = e.target.value;
+                      if (newTitle.length <= 45) {
+                        setTitle(newTitle);
+                      }
+                    }}
+                    maxLength={45}
                     className="input w-full"
                     placeholder="Ex: Como fazer um bolo de cenoura com chocolate?"
                     required

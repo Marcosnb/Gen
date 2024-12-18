@@ -29,7 +29,7 @@ export const GEMINI_PROMPTS = {
 Melhore o seguinte título: "${currentTitle}"
 
 Regras:
-1. Use no máximo 80 caracteres
+1. Use no máximo 45 caracteres
 2. Termine com ponto de interrogação (?)
 3. Seja direto e objetivo
 4. Mantenha o mesmo tema e contexto

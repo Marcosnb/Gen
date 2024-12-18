@@ -822,6 +822,7 @@ export function QuestionCard({ question, onClick }: QuestionCardProps) {
       'restaurante': UtensilsCrossed,
       'comida': Drumstick,
       'bebida': Wine,
+      'bolo': UtensilsCrossed,
 
       // Educação e Conhecimento
       'escola': School,
