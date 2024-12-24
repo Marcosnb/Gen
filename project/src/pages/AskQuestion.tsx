@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TagInput } from '../components/TagInput';
-import { ArrowLeft, Send, Mic, Square, Play, Trash2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Send, Mic, Square, Play, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { AiGenerateButton } from '../components/AiGenerateButton';
 
@@ -105,9 +105,6 @@ export function AskQuestion() {
       if (!title.trim()) {
         throw new Error('O título é obrigatório');
       }
-      if (!content.trim()) {
-        throw new Error('O conteúdo é obrigatório');
-      }
 
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -184,16 +181,11 @@ export function AskQuestion() {
         <div className="bg-card border border-border rounded-lg shadow-sm">
           {/* Cabeçalho */}
           <div className="p-6 border-b border-border">
-            <div className="flex items-center gap-3">
-              <Link to="/" className="p-2 hover:bg-muted/80 rounded-lg transition-colors">
-                <ArrowLeft className="h-5 w-5" />
-              </Link>
-              <div>
-                <h1 className="text-2xl font-bold">Fazer uma Pergunta</h1>
-                <p className="mt-1 text-muted-foreground">
-                  Compartilhe seus conhecimentos com a comunidade
-                </p>
-              </div>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold">Fazer uma Pergunta</h1>
+              <p className="text-muted-foreground">
+                Compartilhe seus conhecimentos com a comunidade
+              </p>
             </div>
           </div>
 
@@ -257,7 +249,6 @@ export function AskQuestion() {
                       rows={8}
                       className="input w-full resize-none pr-16"
                       placeholder="Descreva todos os detalhes que possam ajudar alguém a responder sua pergunta..."
-                      required
                       disabled={isLoading}
                       maxLength={120}
                     />
@@ -411,12 +402,6 @@ export function AskQuestion() {
 
             {/* Botões */}
             <div className="flex items-center justify-end gap-4 pt-6 border-t border-border">
-              <Link
-                to="/"
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors"
-              >
-                Cancelar
-              </Link>
               <button
                 type="submit"
                 disabled={isLoading}

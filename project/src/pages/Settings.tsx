@@ -388,15 +388,7 @@ export function Settings() {
               )}
 
               {/* Botões de Ação */}
-              <div className="mt-6 flex items-center justify-end gap-4">
-                <button
-                  type="button"
-                  onClick={() => navigate('/')}
-
-                  className="px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200"
-                >
-                  Cancelar
-                </button>
+              <div className="mt-6 flex items-center justify-end">
                 <button
                   type="submit"
                   disabled={saving}
